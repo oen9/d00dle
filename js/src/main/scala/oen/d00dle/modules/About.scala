@@ -17,11 +17,11 @@ object About {
               ),
               <.tr(
                 <.td("github"),
-                <.td(<.a(^.target := "_blank", ^.href := "https://github.com/oen9/scalajs-react-akka-starter", "https://github.com/oen9/scalajs-react-akka-starter"))
+                <.td(<.a(^.target := "_blank", ^.href := "https://github.com/oen9/d00dle", "https://github.com/oen9/d00dle"))
               ),
               <.tr(
                 <.td("heroku"),
-                <.td(<.a(^.target := "_blank", ^.href := "https://scalajs-react-akka-starter.herokuapp.com", "https://scalajs-react-akka-starter.herokuapp.com"))
+                <.td(<.a(^.target := "_blank", ^.href := "https://d00dle.herokuapp.com", "https://d00dle.herokuapp.com"))
               ),
               <.tr(
                 <.td("use"),
