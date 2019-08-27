@@ -3,12 +3,10 @@ package oen.d00dle.modules
 import diode.react.ModelProxy
 import oen.d00dle.components.BlueButton
 import oen.d00dle.services.IncreaseClicks
-import oen.d00dle.shared.HelloShared
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import oen.d00dle.services.RootModel
 import oen.d00dle.services.TryGetRandom
-import diode.react.ReactPot._
 
 object Home {
 
@@ -19,27 +17,33 @@ object Home {
     def getRandom(): Callback = $.props.flatMap(_.proxy.dispatchCB(TryGetRandom()))
 
     def render(props: Props) =
-      React.Fragment(
-        <.div(^.cls := "text-center",
-          "Hello: " + HelloShared.TEST_STR
-        ),
-        <.div(^.cls := "row mt-2",
-          <.div(^.cls := "col text-right", BlueButton(BlueButton.Props("click me!", tick()))),
-          <.div(^.cls := "col", " clicks: " + props.proxy().clicks.count)
-        ),
-        <.div(^.cls := "row mt-2",
-          <.div(^.cls := "col text-right", BlueButton(BlueButton.Props("get random from server!", getRandom()))),
-          <.div(^.cls := "col", " random: ",
-            props.proxy().randomNumber.renderPending(_ =>
-                <.div(^.cls := "spinner-border text-primary", ^.role := "status",
-                  <.span(^.cls := "sr-only", "Loading...")
-                )
+      <.div(^.cls := "container",
+        <.div(^.cls := "card",
+          <.div(^.cls := "card-header", "you"),
+          <.div(^.cls := "card-body",
+            <.div(^.cls := "row mt-2",
+              <.div(^.cls := "col text-right mt-2", "nickname"),
+              <.div(^.cls := "col", <.input(^.cls := "form-control")),
+              <.div(^.cls := "col text-left", BlueButton(BlueButton.Props("ok", tick()))),
             ),
-            props.proxy().randomNumber.renderReady(random => random.i),
-            props.proxy().randomNumber.renderEmpty("nothing here yet"),
-            props.proxy().randomNumber.renderFailed(msg => " error: " + msg.toString),
           )
-        )
+        ),
+
+        <.div(^.cls := "card mt-2 mb-2",
+          <.div(^.cls := "card-header", "Lobby list"),
+          <.div(^.cls := "card-body",
+            <.div(^.cls := "row",
+              <.div(^.cls := "col text-right mt-2", "create and enter new lobby"),
+              <.div(^.cls := "col", <.input(^.cls := "form-control")),
+              <.div(^.cls := "col text-left", BlueButton(BlueButton.Props("ok", tick()))),
+            ),
+            <.div(^.cls := "list-group border mt-2",
+              <.a(^.cls := "list-group-item list-group-item-action", "foo", <.i(^.cls := "fas fa-sign-in-alt float-right")),
+              <.a(^.cls := "list-group-item list-group-item-action", "bar", <.i(^.cls := "fas fa-sign-in-alt float-right")),
+              <.a(^.cls := "list-group-item list-group-item-action", "baz", <.i(^.cls := "fas fa-sign-in-alt float-right")),
+            )
+          )
+        ),
       )
   }
 

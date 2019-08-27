@@ -4,23 +4,25 @@ import oen.d00dle.D00dleJS.{AboutLoc, HomeLoc, Loc}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.router.{Resolution, RouterCtl}
 import japgolly.scalajs.react.vdom.html_<^._
+import oen.d00dle.D00dleJS.LobbyLoc
+import oen.d00dle.D00dleJS.GameLoc
 
 object Layout {
-
-  case class MenuItem(idx: Int, label: String, location: Loc)
 
   case class Props(router: RouterCtl[Loc], resolution: Resolution[Loc])
 
   val menuItems = Seq(
-    MenuItem(0, "Home", HomeLoc),
-    MenuItem(1, "About", AboutLoc)
+    HomeLoc,
+    LobbyLoc,
+    GameLoc,
+    AboutLoc
   )
   def nav(props: Props) =
     <.div(^.cls := "navbar navbar-expand-md navbar-dark bg-dark",
       props.router.link(HomeLoc)(
         ^.cls := "navbar-brand",
         <.img(^.src := "front-res/img/logo-mini.png"),
-        " react-akka"
+        " d00dle"
       ),
       <.button(^.cls := "navbar-toggler", ^.tpe := "button", VdomAttr("data-toggle") := "collapse", VdomAttr("data-target") := "#navbarNav", ^.aria.controls := "navbarNav", ^.aria.expanded := "false", ^.aria.label := "Toggle navigation",
         <.span(^.cls := "navbar-toggler-icon")
@@ -28,8 +30,8 @@ object Layout {
       <.div(^.cls := "collapse navbar-collapse", ^.id := "navbarNav",
         <.ul(^.cls := "navbar-nav mr-auto",
           menuItems.map(item =>
-            <.li(^.key := item.idx, ^.cls := "nav-item", (^.cls := "active").when(props.resolution.page == item.location),
-              props.router.link(item.location)(^.cls := "nav-link", item.label)
+            <.li(^.key := item.name, ^.cls := "nav-item", (^.cls := "active").when(props.resolution.page == item),
+              props.router.link(item)(^.cls := "nav-link", item.name)
             )
           ).toVdomArray
         )
@@ -47,8 +49,8 @@ object Layout {
     .render_P(props => {
       React.Fragment(
         nav(props),
-        <.div(^.cls := "container",
-          <.div(^.cls := "main-content mt-5", ^.role := "main", contentBody(props))
+        <.div(^.cls := "container-fluid",
+          <.div(^.cls := "mt-5", ^.role := "main", contentBody(props))
         ),
         footer(props)
       )

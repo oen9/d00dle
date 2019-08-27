@@ -6,12 +6,16 @@ import japgolly.scalajs.react.extra.router._
 import org.scalajs.dom.document
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSImport
+import oen.d00dle.modules.Lobby
+import oen.d00dle.modules.Game
 
 object D00dleJS {
 
-  sealed trait Loc
-  case object HomeLoc extends Loc
-  case object AboutLoc extends Loc
+  sealed abstract class Loc(val name: String)
+  case object HomeLoc extends Loc("home")
+  case object AboutLoc extends Loc("about")
+  case object LobbyLoc extends Loc("lobby test")
+  case object GameLoc extends Loc("game test")
 
   @JSImport("bootstrap", JSImport.Default)
   @js.native
@@ -30,6 +34,8 @@ object D00dleJS {
       (emptyRule
         | staticRoute(root, HomeLoc) ~> render(homeWrapper(Home(_)))
         | staticRoute("#about", AboutLoc) ~> render(About())
+        | staticRoute("#lobby", LobbyLoc) ~> render(homeWrapper(Lobby.apply))
+        | staticRoute("#game", GameLoc) ~> render(homeWrapper(Game.apply))
         )
         .notFound(redirectToPage(HomeLoc)(Redirect.Replace))
         .setTitle(p => s"PAGE = $p | Example App")

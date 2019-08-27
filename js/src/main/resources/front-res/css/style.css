@@ -11,6 +11,26 @@ main > .container {
   padding-left: 15px;
 }
 
-.main-content {
-  min-height: 23rem;
+.green {
+  color: green;
+}
+
+.red {
+  color: red;
+}
+
+.game-size {
+  width: 850px;
+  height: 650px;
+  background-color: rgb(241, 241, 252);
+}
+
+.chat {
+  min-height: 100px;
+  height: 25vh;
+}
+
+.ranking {
+  min-height: 100px;
+  height: 25vh;
 }

@@ -33,6 +33,7 @@ lazy val jsSettings = Seq(
     "org.scala-js" %%% "scalajs-dom" % "0.9.7",
     "com.github.japgolly.scalajs-react" %%% "core" % "1.4.2",
     "com.github.japgolly.scalajs-react" %%% "extra" % "1.4.2",
+    "com.payalabs" %%% "scalajs-react-bridge" % "0.8.1",
     "io.suzaku" %%% "diode" % "1.1.5",
     "io.suzaku" %%% "diode-react" % "1.1.5.142"
   ),
@@ -41,7 +42,9 @@ lazy val jsSettings = Seq(
     "react-dom" -> "16.7.0",
     "react-popper" -> "1.3.4",
     "bootstrap" -> "4.3.1",
-    "jquery" -> "3.4.1"
+    "jquery" -> "3.4.1",
+    "react-canvas-draw" -> "1.0.2",
+    "react-color" -> "2.17.3"
   ),
   webpackBundlingMode := BundlingMode.LibraryAndApplication(), // LibraryOnly() for faster dev builds
   scalaJSUseMainModuleInitializer := true,
