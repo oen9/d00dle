@@ -7,9 +7,11 @@ object Dto {
 
   sealed trait Event extends WsData
   case class UserCreated(id: Int, nickname: String) extends Event
+  case class NicknameChanged(id: Int, nickname: String) extends Event
 
   sealed trait Cmd extends WsData
   case class Log(msg: String) extends Cmd
+  case class ChangeNickname(nickname: String) extends Cmd
 
   import io.circe.generic.extras.Configuration
   implicit val circeConfig = Configuration.default.withDiscriminator("type").withDefaults

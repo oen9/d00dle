@@ -2,9 +2,7 @@ package oen.d00dle.actors
 import akka.actor.typed.ActorRef
 import akka.actor.typed.Behavior
 import akka.actor.typed.scaladsl.Behaviors
-import oen.d00dle.shared.Dto.WsData
-import oen.d00dle.shared.Dto.Log
-import oen.d00dle.shared.Dto.UserCreated
+import oen.d00dle.shared.Dto._
 
 object UserActor {
   val DEFAULT_USER_NAME = "unknown"
@@ -40,6 +38,10 @@ object UserActor {
         ctx.log.info("log msg: [{}] from user: {}", msg, id)
         outRef ! ToOut(log)
         Behavior.same
+      case InData(ChangeNickname(newNickname)) =>
+        ctx.log.debug("user: {} changed nickname from [{}] to [{}]", id, nickname, newNickname)
+        outRef ! ToOut(NicknameChanged(id, newNickname)) // TODO broadcast it inside lobby
+        behavior(id, outRef, newNickname)
       case InData(msg) =>
         outRef ! ToOut(msg)
         Behavior.same

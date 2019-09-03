@@ -8,6 +8,8 @@ import scala.scalajs.js
 import scala.scalajs.js.annotation.JSImport
 import oen.d00dle.modules.Lobby
 import oen.d00dle.modules.Game
+import oen.d00dle.services.AppData.GameData
+import oen.d00dle.services.AppData.User
 
 object D00dleJS {
 
@@ -27,15 +29,16 @@ object D00dleJS {
     Bootstrap
 
     val homeWrapper = AppCircuit.connect(identity(_))
+    val gameWrapper = AppCircuit.connect(_.wsConnection.gameData.fold(GameData(User(0, "error")))(identity))
     val layoutWrapper = AppCircuit.connect(_.wsConnection.gameData)
 
     val routerConfig = RouterConfigDsl[Loc].buildConfig { dsl =>
       import dsl._
 
       (emptyRule
-        | staticRoute(root, HomeLoc) ~> render(homeWrapper(Home(_)))
+        | staticRoute(root, HomeLoc) ~> render(gameWrapper(Home(_)))
         | staticRoute("#about", AboutLoc) ~> render(About())
-        | staticRoute("#lobby", LobbyLoc) ~> render(homeWrapper(Lobby.apply))
+        | staticRoute("#lobby", LobbyLoc) ~> render(gameWrapper(Lobby(_)))
         | staticRoute("#game", GameLoc) ~> render(homeWrapper(Game.apply))
         )
         .notFound(redirectToPage(HomeLoc)(Redirect.Replace))

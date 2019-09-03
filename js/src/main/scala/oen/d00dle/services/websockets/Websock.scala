@@ -26,8 +26,9 @@ object Websock {
 
     def onmessage(e: MessageEvent): Unit = {
       import io.circe.parser.decode
-      decode[WsData](e.data.toString).fold(
-        e => println(s"error: $e"),
+      val toDecode = e.data.toString
+      decode[WsData](toDecode).fold(
+        e => println(s"error: $e in decoding [$toDecode]"),
         messageHandler(_, dispatch)
       )
     }

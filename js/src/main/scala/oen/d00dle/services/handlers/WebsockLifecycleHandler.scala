@@ -1,4 +1,5 @@
 package oen.d00dle.services.handlers
+
 import oen.d00dle.services.AppData._
 import diode.ModelRW
 import diode.ActionHandler
@@ -13,7 +14,7 @@ class WebsockLifecycleHandler[M](modelRW: ModelRW[M, WsConnection], dispatch: Ac
 
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
     case WSConnected(user) =>
-      val gameData = GameData(user.id, user.nickname)
+      val gameData = GameData(user = User(user.id, user.nickname))
       val newValue = value.modify(_.gameData).setTo(gameData.some)
       updated(newValue)
 

@@ -35,7 +35,10 @@ object NewUserHandler {
       Flow[Message]
         .flatMapConcat {
           case TextMessage.Strict(msgText) =>
-            val decoded = decode[WsData](msgText).fold(e => Err(e.getMessage()), identity)
+            val decoded = decode[WsData](msgText).fold(e => {
+              system.log.error(e, "can't decode WsData: {}", msgText)
+              Err(e.getMessage())
+            }, identity)
             Source.single(InData(decoded))
           case _ =>
             Source.empty[InData]
