@@ -5,8 +5,7 @@ import oen.d00dle.components.BlueButton
 import oen.d00dle.services.IncreaseClicks
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import oen.d00dle.services.RootModel
-import oen.d00dle.services.TryGetRandom
+import oen.d00dle.services.AppData.RootModel
 
 object Lobby {
 
@@ -14,7 +13,6 @@ object Lobby {
 
   class Backend($: BackendScope[Props, Unit]) {
     def tick(): Callback = $.props.flatMap(_.proxy.dispatchCB(IncreaseClicks))
-    def getRandom(): Callback = $.props.flatMap(_.proxy.dispatchCB(TryGetRandom()))
 
     def render(props: Props) =
       <.div(^.cls := "container",

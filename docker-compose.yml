@@ -16,7 +16,7 @@ services:
   # sbt stage
   # docker-compose up -d web
   web:
-    image: oracle/graalvm-ce:19.1.1
+    image: oracle/graalvm-ce:19.2.0
     ports:
       - 8080:8080
       - 8000:8000

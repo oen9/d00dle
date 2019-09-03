@@ -6,14 +6,16 @@
 ## backend
 1. scala
 1. akka-http
+1. akka-actor-typed
 
 ## frontend
 1. scalajs
-1. reactjs
+1. scalajs-react
 1. diode
 1. bootstrap
 
 # DEV
+in `js/src/main/scala/oen/d00dle/services/Websock.scala` comment `host` for `prod` and uncomment for `dev`
 
 ## js
 `fastOptJS::webpack`\

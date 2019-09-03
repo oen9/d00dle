@@ -2,18 +2,12 @@ package oen.d00dle.services
 
 import diode.{Action, ActionHandler, Circuit, ModelRW}
 import diode.react.ReactConnector
-import oen.d00dle.shared.Dto.Foo
-import diode.data.Pot
-import diode.data.Empty
-import diode.data.PotAction
+import oen.d00dle.services.AppData._
+import oen.d00dle.services.handlers.WebsockLifecycleHandler
 
 case class Clicks(count: Int)
-case class RootModel(clicks: Clicks, randomNumber: Pot[Foo] = Empty)
 
 case object IncreaseClicks extends Action
-case class TryGetRandom(potResult: Pot[Foo] = Empty) extends PotAction[Foo, TryGetRandom] {
-  def next(newResult: Pot[Foo]) = copy(potResult = newResult)
-}
 
 class ClicksHandler[M](modelRW: ModelRW[M, Clicks]) extends ActionHandler(modelRW) {
   override def handle = {
@@ -21,20 +15,14 @@ class ClicksHandler[M](modelRW: ModelRW[M, Clicks]) extends ActionHandler(modelR
   }
 }
 
-class RandomNumberHandler[M](modelRW: ModelRW[M, Pot[Foo]]) extends ActionHandler(modelRW) {
-  import scala.concurrent.ExecutionContext.Implicits.global
-  override def handle = {
-    case action: TryGetRandom =>
-      val updateF = action.effect(AjaxClient.getRandom)(identity _)
-      action.handleWith(this, updateF)(PotAction.handler())
-  }
-}
-
 object AppCircuit extends Circuit[RootModel] with ReactConnector[RootModel] {
-  override protected def initialModel: RootModel = RootModel(Clicks(0))
+  override protected def initialModel: RootModel = RootModel(
+    clicks = Clicks(0),
+    wsConnection = WsConnection(Websock.connect(dispatch))
+  )
 
   override protected def actionHandler: AppCircuit.HandlerFunction = composeHandlers(
     new ClicksHandler(zoomTo(_.clicks)),
-    new RandomNumberHandler(zoomTo(_.randomNumber))
+    new WebsockLifecycleHandler(zoomTo(_.wsConnection), dispatch[Action])
   )
 }

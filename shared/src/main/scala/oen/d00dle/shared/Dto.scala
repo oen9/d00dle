@@ -1,12 +1,16 @@
 package oen.d00dle.shared
 
 object Dto {
-    sealed trait Event
-    case class Foo(i: Int) extends Event
-    case class Bar(s: String) extends Event
-    case class Baz(c: Char) extends Event
-    case class Qux(values: List[String]) extends Event
+  sealed trait WsData
 
-    import io.circe.generic.extras.Configuration
-    implicit val circeConfig = Configuration.default.withDiscriminator("eventType").withDefaults
+  case class Err(t: String) extends WsData
+
+  sealed trait Event extends WsData
+  case class UserCreated(id: Int, nickname: String) extends Event
+
+  sealed trait Cmd extends WsData
+  case class Log(msg: String) extends Cmd
+
+  import io.circe.generic.extras.Configuration
+  implicit val circeConfig = Configuration.default.withDiscriminator("type").withDefaults
 }

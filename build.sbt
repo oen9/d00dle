@@ -1,4 +1,4 @@
-val Http4sVersion = "0.20.9"
+val AkkaVersion = "2.5.25"
 val LogbackVersion = "1.2.3"
 scalaVersion := "2.12.8"
 
@@ -55,10 +55,12 @@ lazy val jvmSettings = Seq(
   libraryDependencies ++= Seq(
     "org.typelevel" %% "cats-effect" % "1.4.0",
     "com.typesafe.akka" %% "akka-http"   % "10.1.9",
-    "com.typesafe.akka" %% "akka-stream" % "2.5.24",
+    "com.typesafe.akka" %% "akka-stream" % AkkaVersion,
+    "com.typesafe.akka" %% "akka-actor-typed" % AkkaVersion,
+    "com.typesafe.akka" %% "akka-stream-typed" % AkkaVersion,
+    "com.typesafe.akka" %% "akka-slf4j" % AkkaVersion,
     "de.heikoseeberger" %% "akka-http-circe" % "1.27.0",
     "ch.megard" %% "akka-http-cors" % "0.4.1",
-    "com.typesafe.akka" %% "akka-slf4j" % "2.5.24",
     "ch.qos.logback" % "logback-classic" % LogbackVersion
   ),
   target := baseDirectory.value / ".." / "target"
@@ -80,7 +82,7 @@ lazy val d00dleJVM = d00dle.jvm
   .enablePlugins(JavaAppPackaging)
   .settings(
     dockerExposedPorts := Seq(8080),
-    dockerBaseImage := "oracle/graalvm-ce:19.1.1",
+    dockerBaseImage := "oracle/graalvm-ce:19.2.0",
     (unmanagedResourceDirectories in Compile) += (resourceDirectory in(d00dleJS, Compile)).value,
     mappings.in(Universal) ++= webpack.in(Compile, fullOptJS).in(d00dleJS, Compile).value.map { f =>
       f.data -> s"assets/${f.data.getName()}"

@@ -1,13 +1,16 @@
 package oen.d00dle
 
 import cats.effect._
-import akka.actor.ActorSystem
-import akka.stream.ActorMaterializer
 import scala.util.Success
 import scala.util.Failure
-import akka.event.Logging
 import com.typesafe.config.ConfigFactory
 import akka.http.scaladsl.Http
+import akka.actor.typed.ActorSystem
+import akka.actor.typed.scaladsl.adapter._
+import akka.actor.typed.DispatcherSelector
+import oen.d00dle.actors.UserDispatcher
+import oen.d00dle.actors.UserDispatcher.UserDispatcherMsg
+import akka.stream.typed.scaladsl.ActorMaterializer
 
 object D00dle extends IOApp {
 
@@ -22,22 +25,21 @@ object D00dle extends IOApp {
     val port = config.getInt("http.port")
     val assets = config.getString("assets")
 
-    implicit val system = ActorSystem("d00dle", config)
+    implicit val system: ActorSystem[UserDispatcherMsg] = ActorSystem(UserDispatcher(), "d00dle", config)
+    implicit val systemUntyped = system.toUntyped
     implicit val materializer = ActorMaterializer()
 
-    implicit val executionContext = system.dispatcher
+    implicit val executionContext = system.dispatchers.lookup(DispatcherSelector.default())
 
-    val api = AppApi(assets, system)
+    val api = AppApi(assets)
     val bindingFuture = Http().bindAndHandle(api.routes, host, port)
-
-    val log =  Logging(system.eventStream, "d00dle main")
 
     bindingFuture.onComplete {
       case Success(serverBinding) =>
-        log.info("Bound to {}", serverBinding.localAddress)
+        system.log.info("Bound to {}", serverBinding.localAddress)
 
       case  Failure(t) =>
-        log.error(t, "Failed to bind to {}:{}!", host, port)
+        system.log.error(t, "Failed to bind to {}:{}!", host, port)
         system.terminate()
     }
   }

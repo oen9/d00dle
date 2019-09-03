@@ -3,8 +3,7 @@ package oen.d00dle.modules
 import diode.react.ModelProxy
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import oen.d00dle.services.RootModel
-import oen.d00dle.services.TryGetRandom
+import oen.d00dle.services.AppData.RootModel
 import oen.d00dle.components.CanvasDraw
 import oen.d00dle.components.BlockPicker
 import oen.d00dle.components.SketchPicker
@@ -17,8 +16,6 @@ object Game {
   case class State(color: String = "#03a9f4", brushRadius: Int = 1, lazyRadius: Int = 0)
 
   class Backend($: BackendScope[Props, State]) {
-    def getRandom(): Callback = $.props.flatMap(_.proxy.dispatchCB(TryGetRandom()))
-
     def changeColor(newColor: BlockPicker.ColorEvt) = $.modState(_.copy(color = newColor.hex))
 
     def clear() = Callback(getCanvasOps.clear())
