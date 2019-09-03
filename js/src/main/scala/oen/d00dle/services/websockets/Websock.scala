@@ -1,4 +1,4 @@
-package oen.d00dle.services
+package oen.d00dle.services.websockets
 
 import diode.{Effect, NoAction}
 import org.scalajs.dom
@@ -6,7 +6,6 @@ import org.scalajs.dom.{CloseEvent, Event, MessageEvent, WebSocket}
 import oen.d00dle.shared.Dto._
 import oen.d00dle.services.AppData._
 import io.circe.generic.extras.auto._
-import io.circe.syntax._
 
 import scala.concurrent.ExecutionContext
 import scala.scalajs.js
@@ -19,15 +18,18 @@ object Websock {
   // val host = "localhost:8080" // dev
   val url = protocol + host + "/game"
 
-  def connect(dispatch: Action => Unit) = {
-    def onopen(e: Event): Unit = { dispatch(WSConnected("foo")) }
+  def connect(
+    dispatch: Action => Unit,
+    messageHandler: (WsData, Action => Unit) => Unit = WebsockMessageHandler.handle
+  ) = {
+    def onopen(e: Event): Unit = { }
 
     def onmessage(e: MessageEvent): Unit = {
       import io.circe.parser.decode
-      println("websock msg: " + e.data.toString())
-      decode[WsData](e.data.toString).fold(e => println(s"error: $e"), {
-        case unknown => println(s"[ws] unsupported data: $unknown")
-      })
+      decode[WsData](e.data.toString).fold(
+        e => println(s"error: $e"),
+        messageHandler(_, dispatch)
+      )
     }
 
     def onerror(e: Event): Unit = {
@@ -52,6 +54,7 @@ object Websock {
 
   def send(ws: dom.WebSocket, data: WsData): Unit = {
     if (ws.readyState == 1) {
+      import io.circe.syntax._
       val msg = data.asJson.noSpaces
       ws.send(msg)
     }

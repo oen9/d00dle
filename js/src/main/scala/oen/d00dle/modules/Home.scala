@@ -2,7 +2,6 @@ package oen.d00dle.modules
 
 import diode.react.ModelProxy
 import oen.d00dle.components.BlueButton
-import oen.d00dle.services.IncreaseClicks
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import oen.d00dle.services.AppData.RootModel
@@ -12,7 +11,7 @@ object Home {
   case class Props(proxy: ModelProxy[RootModel])
 
   class Backend($: BackendScope[Props, Unit]) {
-    def tick(): Callback = $.props.flatMap(_.proxy.dispatchCB(IncreaseClicks))
+    def tick(): Callback = Callback(println("tick"))
 
     def render(props: Props) =
       <.div(^.cls := "container",

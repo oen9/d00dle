@@ -6,15 +6,16 @@ import diode.ActionResult
 import com.softwaremill.quicklens._
 import diode.Effect
 import diode.Action
-import oen.d00dle.services.Websock
-import oen.d00dle.shared.Dto.Log
+import oen.d00dle.services.websockets.Websock
+import cats.implicits._
 
 class WebsockLifecycleHandler[M](modelRW: ModelRW[M, WsConnection], dispatch: Action => Unit) extends ActionHandler(modelRW) {
 
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
     case WSConnected(user) =>
-      import scala.concurrent.ExecutionContext.Implicits.global
-      effectOnly(Websock.sendAsEffect(value.ws, Log("test log from js")))
+      val gameData = GameData(user.id, user.nickname)
+      val newValue = value.modify(_.gameData).setTo(gameData.some)
+      updated(newValue)
 
     case WSDisconnected =>
       import scala.concurrent.ExecutionContext.Implicits.global

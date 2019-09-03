@@ -27,6 +27,7 @@ object D00dleJS {
     Bootstrap
 
     val homeWrapper = AppCircuit.connect(identity(_))
+    val layoutWrapper = AppCircuit.connect(_.wsConnection.gameData)
 
     val routerConfig = RouterConfigDsl[Loc].buildConfig { dsl =>
       import dsl._
@@ -39,7 +40,7 @@ object D00dleJS {
         )
         .notFound(redirectToPage(HomeLoc)(Redirect.Replace))
         .setTitle(p => s"PAGE = $p | Example App")
-    }.renderWith(Layout.apply)
+    }.renderWith((ctl, resolution) => layoutWrapper(Layout(ctl, resolution, _)))
 
     val router = Router(BaseUrl.until_#, routerConfig)
     router().renderIntoDOM(target)
