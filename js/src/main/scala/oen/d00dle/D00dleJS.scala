@@ -13,11 +13,11 @@ import oen.d00dle.services.AppData.User
 
 object D00dleJS {
 
-  sealed abstract class Loc(val name: String)
-  case object HomeLoc extends Loc("home")
-  case object AboutLoc extends Loc("about")
-  case object LobbyLoc extends Loc("lobby test")
-  case object GameLoc extends Loc("game test")
+  sealed trait Loc { def name: String }
+  case object HomeLoc extends Loc { val name = "home" }
+  case object AboutLoc extends Loc { val name = "about" }
+  case class LobbyLoc(id: Int) extends Loc { val name = "lobby" }
+  case object GameLoc extends Loc { val name = "game" }
 
   @JSImport("bootstrap", JSImport.Default)
   @js.native
@@ -32,17 +32,19 @@ object D00dleJS {
     val gameWrapper = AppCircuit.connect(_.wsConnection.gameData.fold(GameData(User(0, "error")))(identity))
     val layoutWrapper = AppCircuit.connect(_.wsConnection.gameData)
 
+    def lobbyWrapper(id: Int) = AppCircuit.connect(_.wsConnection.gameData)
+
     val routerConfig = RouterConfigDsl[Loc].buildConfig { dsl =>
       import dsl._
 
       (emptyRule
-        | staticRoute(root, HomeLoc) ~> render(gameWrapper(Home(_)))
+        | staticRoute(root, HomeLoc) ~> renderR(router => gameWrapper(Home(router, _)))
         | staticRoute("#about", AboutLoc) ~> render(About())
-        | staticRoute("#lobby", LobbyLoc) ~> render(gameWrapper(Lobby(_)))
+        | dynamicRouteCT("#lobby" / int.caseClass[LobbyLoc]) ~> dynRender(loc => lobbyWrapper(loc.id)(Lobby(_)))
         | staticRoute("#game", GameLoc) ~> render(homeWrapper(Game.apply))
         )
         .notFound(redirectToPage(HomeLoc)(Redirect.Replace))
-        .setTitle(p => s"PAGE = $p | Example App")
+        .setTitle(p => s"d00dle - ${p.name}")
     }.renderWith((ctl, resolution) => layoutWrapper(Layout(ctl, resolution, _)))
 
     val router = Router(BaseUrl.until_#, routerConfig)

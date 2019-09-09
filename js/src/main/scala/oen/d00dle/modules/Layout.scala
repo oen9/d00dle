@@ -4,7 +4,6 @@ import oen.d00dle.D00dleJS.{AboutLoc, HomeLoc, Loc}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.router.{Resolution, RouterCtl}
 import japgolly.scalajs.react.vdom.html_<^._
-import oen.d00dle.D00dleJS.LobbyLoc
 import oen.d00dle.D00dleJS.GameLoc
 import diode.react.ModelProxy
 import oen.d00dle.services.AppData.GameData
@@ -15,7 +14,6 @@ object Layout {
 
   val menuItems = Seq(
     HomeLoc,
-    LobbyLoc,
     GameLoc,
     AboutLoc
   )

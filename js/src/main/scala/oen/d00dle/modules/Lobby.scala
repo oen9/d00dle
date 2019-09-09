@@ -8,7 +8,7 @@ import oen.d00dle.services.AppData.ChangeNicknameA
 
 object Lobby {
 
-  case class Props(proxy: ModelProxy[GameData])
+  case class Props(proxy: ModelProxy[Option[GameData]])
   case class State(nickname: String)
 
   class Backend($: BackendScope[Props, State]) {
@@ -34,7 +34,9 @@ object Lobby {
               <.div(^.cls := "form-group row mt-2",
                   <.div(^.cls := "col text-right mt-2",
                     <.span(^.cls := "mr-1", "nickname"),
-                    <.small(^.cls := "text-muted", s"${props.proxy().user.nickname} (${props.proxy().user.id})"),
+                    <.small(^.cls := "text-muted",
+                      s"${props.proxy().map(_.user.nickname).fold("unknown")(identity)} (${props.proxy().map(_.user.id).fold(-1)(identity)})"
+                    ),
                   ),
                   <.div(^.cls := "col",
                     <.input(^.cls := "form-control", ^.value := state.nickname, ^.onChange ==> updateNickname)
@@ -94,9 +96,9 @@ object Lobby {
   }
 
   val component = ScalaComponent.builder[Props]("Home")
-    .initialStateFromProps(props => State(nickname = props.proxy().user.nickname))
+    .initialStateFromProps(props => State(nickname = props.proxy().map(_.user.nickname).fold("unknown")(identity)))
     .renderBackend[Backend]
     .build
 
-  def apply(proxy: ModelProxy[GameData]) = component(Props(proxy))
+  def apply(proxy: ModelProxy[Option[GameData]]) = component(Props(proxy))
 }

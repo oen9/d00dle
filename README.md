@@ -15,7 +15,6 @@
 1. bootstrap
 
 # DEV
-in `js/src/main/scala/oen/d00dle/services/Websock.scala` comment `host` for `prod` and uncomment for `dev`
 
 ## js
 `fastOptJS::webpack`\
@@ -28,7 +27,7 @@ http://localhost:8080/
 
 ## js + server (dev conf)
 Run server normally `reStart`.\
-Connect your js api to http://localhost:8080 (e.g. change some baseUrl in js project).\
+Connect your js api to http://localhost:8080 (in `js/src/main/scala/oen/d00dle/services/Websock.scala` comment `host` for `prod` and uncomment for `dev`).\
 Run js: `fastOptJS::webpack` and `fastOptJS`.\
 Open http://localhost:12345/js/target/scala-2.12/classes/index-dev.html in browser.\
 When server changed run `reStart`.\

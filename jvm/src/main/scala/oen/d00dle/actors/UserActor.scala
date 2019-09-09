@@ -10,17 +10,19 @@ object UserActor {
   sealed trait UserActorMsg
   case class RegisterOut(respondTo: ActorRef[OutData]) extends UserActorMsg
   case class InData(wsData: WsData) extends UserActorMsg
+  case class Forward(wsData: WsData) extends UserActorMsg
 
   sealed trait OutData
   case class ToOut(wsData: WsData) extends OutData
   case object Complete extends UserActorMsg with OutData
   case class Fail(ex: Throwable) extends UserActorMsg with OutData
 
-  def initBehavior(id: Int): Behavior[UserActorMsg] = Behaviors.receive { (ctx, msg) =>
+  def initBehavior(id: Int, lobbyManager: ActorRef[LobbyManager.LobbyMsg]): Behavior[UserActorMsg] = Behaviors.receive { (ctx, msg) =>
     msg match {
       case RegisterOut(respondTo) =>
         respondTo ! ToOut(UserCreated(id, DEFAULT_USER_NAME))
-        behavior(id, respondTo, DEFAULT_USER_NAME)
+        lobbyManager ! LobbyManager.GetLobbyList(ctx.self)
+        behavior(id, respondTo, DEFAULT_USER_NAME, lobbyManager)
 
       case unknown =>
         ctx.log.error("user: {} is waiting for outRef. Unhandled: {}", id, unknown)
@@ -31,7 +33,8 @@ object UserActor {
   def behavior(
     id: Int,
     outRef: ActorRef[OutData],
-    nickname: String
+    nickname: String,
+    lobbyManager: ActorRef[LobbyManager.LobbyMsg]
   ): Behavior[UserActorMsg] = Behaviors.receive { (ctx, msg) =>
     msg match {
       case InData(log@Log(msg)) =>
@@ -41,7 +44,16 @@ object UserActor {
       case InData(ChangeNickname(newNickname)) =>
         ctx.log.debug("user: {} changed nickname from [{}] to [{}]", id, nickname, newNickname)
         outRef ! ToOut(NicknameChanged(id, newNickname)) // TODO broadcast it inside lobby
-        behavior(id, outRef, newNickname)
+        behavior(id, outRef, newNickname, lobbyManager)
+
+      case InData(CreateLobby(name)) =>
+        lobbyManager ! LobbyManager.CreateNewLobby(name)
+        Behavior.same
+
+      case Forward(msg) =>
+        outRef ! ToOut(msg)
+        Behavior.same
+
       case InData(msg) =>
         outRef ! ToOut(msg)
         Behavior.same
@@ -59,8 +71,8 @@ object UserActor {
     }
   }
 
-  def apply(id: Int): Behavior[UserActorMsg] = Behaviors.setup { ctx =>
+  def apply(id: Int, lobbyManager: ActorRef[LobbyManager.LobbyMsg]): Behavior[UserActorMsg] = Behaviors.setup { ctx =>
     ctx.log.info("user: {} created", id)
-    initBehavior(id)
+    initBehavior(id, lobbyManager)
   }
 }

@@ -1,13 +1,14 @@
 val AkkaVersion = "2.5.25"
 val LogbackVersion = "1.2.3"
-scalaVersion := "2.12.8"
+scalaVersion := "2.12.9"
 
 import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 
 lazy val sharedSettings = Seq(
   organization := "oen",
-  scalaVersion := "2.12.8",
+  scalaVersion := "2.12.9",
   version := "0.1.0-SNAPSHOT",
+  turbo := true,
   libraryDependencies ++= Seq(
     "com.lihaoyi" %%% "scalatags" % "0.7.0",
     "org.typelevel" %% "cats-core" % "1.6.1",

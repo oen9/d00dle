@@ -13,5 +13,8 @@ class WebsockCmdHandler[M](modelRW: ModelRW[M, WsConnection]) extends ActionHand
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
     case ChangeNicknameA(nickname) =>
       effectOnly(Websock.sendAsEffect(value.ws, Dto.ChangeNickname(nickname)))
+
+    case CreateLobbyA(name) =>
+      effectOnly(Websock.sendAsEffect(value.ws, Dto.CreateLobby(name)))
   }
 }
