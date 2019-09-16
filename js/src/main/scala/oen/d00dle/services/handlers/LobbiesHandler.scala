@@ -16,5 +16,9 @@ class LobbiesHandler[M](modelRW: ModelRW[M, Option[IndexedSeq[LobbyData]]]) exte
     case LobbyAddedA(lobby) =>
       val newValue = value.modify(_.each).using(lobby +: _)
       updated(newValue)
+
+    case LobbyClosedA(id) =>
+      val newValue = value.modify(_.each).using(_.filter(_.id != id))
+      updated(newValue)
   }
 }

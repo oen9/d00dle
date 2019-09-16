@@ -53,10 +53,13 @@ object Layout {
         <.div(^.cls := "container-fluid",
           <.div(^.cls := "mt-5", ^.role := "main",
             props.proxy().fold(
-              <.div(^.cls := "d-flex justify-content-center",
-                <.div(^.cls := "spinner-border text-primary", ^.role := "status",
-                  <.span(^.cls := "sr-only", "Loading...")
-                )
+              <.div(
+                <.div(^.cls := "d-flex justify-content-center",
+                  <.div(^.cls := "spinner-border text-primary", ^.role := "status",
+                    <.span(^.cls := "sr-only", "Loading...")
+                  )
+                ),
+                <.div(^.cls := "d-flex justify-content-center", "connecting ...")
               ): VdomElement
             )(_ => contentBody(props))
           )

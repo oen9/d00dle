@@ -9,7 +9,7 @@ object UserDispatcher {
 
   case class UserCreated(user: ActorRef[UserActor.UserActorMsg])
 
-  def behavior(nextId: Int, lobbyManager: ActorRef[LobbyManager.LobbyMsg]): Behavior[UserDispatcherMsg] = Behaviors.receive { (ctx, msg) =>
+  def behavior(nextId: Int, lobbyManager: ActorRef[LobbyManager.LobbyManagerMsg]): Behavior[UserDispatcherMsg] = Behaviors.receive { (ctx, msg) =>
     msg match {
       case CreateUser(respondTo) =>
         val newUser = ctx.spawn(UserActor(nextId, lobbyManager), s"user-$nextId")

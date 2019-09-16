@@ -16,5 +16,17 @@ class WebsockCmdHandler[M](modelRW: ModelRW[M, WsConnection]) extends ActionHand
 
     case CreateLobbyA(name) =>
       effectOnly(Websock.sendAsEffect(value.ws, Dto.CreateLobby(name)))
+
+    case JoinLobbyA(id) =>
+      effectOnly(Websock.sendAsEffect(value.ws, Dto.JoinLobby(id)))
+
+    case QuitLobbyA =>
+      effectOnly(Websock.sendAsEffect(value.ws, Dto.QuitLobby))
+
+    case SetReadyA =>
+      effectOnly(Websock.sendAsEffect(value.ws, Dto.SetReady))
+
+    case SetNotReadyA =>
+      effectOnly(Websock.sendAsEffect(value.ws, Dto.SetNotReady))
   }
 }

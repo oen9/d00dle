@@ -10,7 +10,7 @@ class UserHandler[M](modelRW: ModelRW[M, Option[User]]) extends ActionHandler(mo
 
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
     case NicknameChangedA(id, nickname) =>
-      val newValue = value .modify(_.each).using { user => // due to eachWhere bug
+      val newValue = value.modify(_.each).using { user => // due to eachWhere bug
         if (id == user.id) user.modify(_.nickname).setTo(nickname)
         else user
       }

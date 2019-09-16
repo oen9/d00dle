@@ -31,8 +31,7 @@ object D00dleJS {
     val homeWrapper = AppCircuit.connect(identity(_))
     val gameWrapper = AppCircuit.connect(_.wsConnection.gameData.fold(GameData(User(0, "error")))(identity))
     val layoutWrapper = AppCircuit.connect(_.wsConnection.gameData)
-
-    def lobbyWrapper(id: Int) = AppCircuit.connect(_.wsConnection.gameData)
+    val lobbyWrapper = AppCircuit.connect(_.wsConnection.gameData)
 
     val routerConfig = RouterConfigDsl[Loc].buildConfig { dsl =>
       import dsl._
@@ -40,7 +39,7 @@ object D00dleJS {
       (emptyRule
         | staticRoute(root, HomeLoc) ~> renderR(router => gameWrapper(Home(router, _)))
         | staticRoute("#about", AboutLoc) ~> render(About())
-        | dynamicRouteCT("#lobby" / int.caseClass[LobbyLoc]) ~> dynRender(loc => lobbyWrapper(loc.id)(Lobby(_)))
+        | dynamicRouteCT("#lobby" / int.caseClass[LobbyLoc]) ~> dynRenderR((loc, router) => lobbyWrapper(Lobby(router, _, loc.id)))
         | staticRoute("#game", GameLoc) ~> render(homeWrapper(Game.apply))
         )
         .notFound(redirectToPage(HomeLoc)(Redirect.Replace))
