@@ -4,6 +4,7 @@ import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.ActorRef
 import io.scalaland.chimney.dsl._
 import oen.d00dle.shared.Dto
+import com.softwaremill.quicklens._
 
 object LobbyManager {
   sealed trait LobbyManagerMsg
@@ -19,7 +20,11 @@ object LobbyManager {
   case class LobbyFound(ref: ActorRef[LobbyActor.LobbyMsg], lobbyId: Int) extends FindLobbyResponse
   case class LobbyNotFound(lobbyId: Int) extends FindLobbyResponse
 
-  case class LobbyData(id: Int, name: String, ref: ActorRef[LobbyActor.LobbyMsg])
+  case class GameStarted(lobbyId: Int) extends LobbyManagerMsg
+  sealed trait LobbyMode
+  case object GameMode extends LobbyMode
+  case object PendingMode extends LobbyMode
+  case class LobbyData(id: Int, name: String, ref: ActorRef[LobbyActor.LobbyMsg], mode: LobbyMode = PendingMode)
 
   def behavior(
     counter: Int,
@@ -33,13 +38,13 @@ object LobbyManager {
         behavior(counter, lobbies, users + ref)
 
       case GetLobbyList(respondTo) =>
-        val lobbiesToOut = lobbies.into[IndexedSeq[Dto.LobbyData]].transform
+        val lobbiesToOut = lobbies.filter(_.mode == PendingMode).into[IndexedSeq[Dto.LobbyData]].transform
         respondTo ! UserActor.Forward(Dto.LobbyList(lobbiesToOut))
         Behavior.same
 
       case CreateNewLobby(name) =>
         val nextId = counter + 1
-        val lobbyRef = ctx.spawn(LobbyActor(nextId, name), s"lobby-$nextId")
+        val lobbyRef = ctx.spawn(LobbyActor(nextId, name, ctx.self), s"lobby-$nextId")
         ctx.watchWith(lobbyRef, LobbyClosed(nextId))
         val createdLobby = LobbyData(nextId, name, lobbyRef)
         ctx.log.info("new lobby: {}", createdLobby)
@@ -54,11 +59,18 @@ object LobbyManager {
         behavior(counter, lobbies.filter(_.id != lobbyId), users)
 
       case FindLobby(respondTo, lobbyId) =>
-        lobbies.find(_.id == lobbyId) match {
+        lobbies.find(lobby => lobby.id == lobbyId && lobby.mode == PendingMode) match {
           case None => respondTo ! LobbyNotFound(lobbyId)
           case Some(lobbyData) => respondTo ! LobbyFound(lobbyData.ref, lobbyData.id)
         }
         Behavior.same
+
+      case GameStarted(lobbyId) =>
+        val findLobbyPredicate: LobbyData => Boolean = _.id == lobbyId
+        val updlobbies = lobbies.modify(_.eachWhere(findLobbyPredicate).mode).setTo(GameMode)
+        val msg = Dto.LobbyClosed(lobbyId)
+        users.foreach(_ ! UserActor.Forward(msg))
+        behavior(counter, updlobbies, users)
 
       case UserTerminated(ref) =>
         ctx.log.debug("user terminated: {}", ref)
@@ -67,7 +79,7 @@ object LobbyManager {
   }
 
   def apply(): Behavior[LobbyManagerMsg] = Behaviors.setup { ctx =>
-    val exampleRef = ctx.spawn(LobbyActor(0, "lobby-example"), "lobby-example-0")
+    val exampleRef = ctx.spawn(LobbyActor(0, "lobby-example", ctx.self), "lobby-example-0")
     ctx.watchWith(exampleRef, LobbyClosed(0))
     behavior(
       counter = 0,

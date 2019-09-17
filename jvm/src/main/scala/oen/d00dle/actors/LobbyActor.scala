@@ -14,14 +14,35 @@ object LobbyActor {
 
   case class NicknameChanged(userId: Int, newNickname: String) extends LobbyMsg
 
+  case object GameFinished extends LobbyMsg
+
   case class LobbyUser(ref: ActorRef[UserActor.UserActorMsg], dtoData: Dto.LobbyUser)
 
   def behavior(
     id: Int,
     name: String,
+    lobbyManager: ActorRef[LobbyManager.LobbyManagerMsg],
     users: Map[Int, LobbyUser] = Map()
   ): Behavior[LobbyMsg] = Behaviors.receive { (ctx, msg) =>
-    msg match{
+
+    def withChangedUsers(updUsers: Map[Int, LobbyUser]): Behavior[LobbyMsg] = behavior(id, name, lobbyManager, updUsers)
+
+    def startGame(updUsers: Map[Int, LobbyUser]): Behavior[LobbyMsg] = {
+      lobbyManager ! LobbyManager.GameStarted(id)
+      // TODO start game SOMEHOW
+      ctx.log.info("All users in lobby [{}] ready. Game started!", id)
+      behavior(id, name, lobbyManager, updUsers)
+      Behaviors.receiveMessage {
+        case GameFinished =>
+          ctx.log.error("Game finished. Closing lobby [{}]", id)
+          Behaviors.stopped
+        case msg =>
+          ctx.log.error("Lobby [{}] already started game. Message [{}] unhandled", id, msg)
+          Behaviors.same
+      }
+    }
+
+    msg match {
       case JoinLobby(userId, nickname, ref) =>
         val lobbyUser = LobbyUser(ref, Dto.LobbyUser(Dto.User(userId, nickname)))
         ctx.watchWith(ref, ExitLobby(userId))
@@ -30,7 +51,7 @@ object LobbyActor {
         ref ! UserActor.Forward(Dto.JoinedLobby(id, name, newUsers.values.map(_.dtoData).toSeq))
         val msgToBroadcast = UserActor.Forward(Dto.SomeoneJoinedLobby(lobbyUser.dtoData))
         users.values.foreach(_.ref ! msgToBroadcast)
-        behavior(id, name, newUsers)
+        withChangedUsers(newUsers)
 
       case ExitLobby(userId) =>
         users.get(userId).foreach(u => ctx.unwatch(u.ref))
@@ -39,23 +60,25 @@ object LobbyActor {
         val msgToBroadcast = UserActor.Forward(Dto.SomeoneLeftLobby(userId))
         updUsers.values.foreach(_.ref ! msgToBroadcast)
         if (updUsers.isEmpty) Behavior.stopped
-        else behavior(id, name, updUsers)
+        else withChangedUsers(updUsers)
 
       case NicknameChanged(userId, newNickname) =>
         val updUsers = users.modify(_.at(userId).dtoData.u.name).setTo(newNickname)
         broadcastUserChanged(updUsers, userId)
-        behavior(id, name, updUsers)
+        withChangedUsers(updUsers)
 
       case SetReady(userId) =>
         val updUsers = users.modify(_.at(userId).dtoData.readyState ).setTo(Dto.Ready)
         broadcastUserChanged(updUsers, userId)
-        behavior(id, name, updUsers)
+
+        val allReady = updUsers.forall { case (_, lu) => lu.dtoData.readyState == Dto.Ready }
+        if (allReady && updUsers.size >= 2) startGame(updUsers)
+        else withChangedUsers(updUsers)
 
       case SetNotReady(userId) =>
         val updUsers = users.modify(_.at(userId).dtoData.readyState ).setTo(Dto.NotReady)
         broadcastUserChanged(updUsers, userId)
-        behavior(id, name, updUsers)
-
+        withChangedUsers(updUsers)
 
       case _ => Behavior.same
     }
@@ -73,5 +96,5 @@ object LobbyActor {
     users.values.map(_.ref).foreach(_ ! msg)
   }
 
-  def apply(id: Int, name: String): Behavior[LobbyMsg] = behavior(id, name)
+  def apply(id: Int, name: String, lobbyManager: ActorRef[LobbyManager.LobbyManagerMsg]): Behavior[LobbyMsg] = behavior(id, name, lobbyManager)
 }
