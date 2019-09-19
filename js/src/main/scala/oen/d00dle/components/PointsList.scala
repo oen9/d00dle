@@ -3,6 +3,7 @@ package oen.d00dle.components
 import oen.d00dle.shared.Dto.GameUser
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
+import oen.d00dle.shared.Dto
 
 object PointsList {
   case class Props(users: IndexedSeq[GameUser])
@@ -17,28 +18,20 @@ object PointsList {
                 <.th("#"),
                 <.th("nickname"),
                 <.th("score")
-              ),
+              )
             ),
             <.tbody(
-              <.tr(
-                <.th(^.scope := "row", "1"),
-                <.td("foo"),
-                <.td("10")
-              ),
-              <.tr(
-                <.th(^.scope := "row", "2"),
-                <.td("bar"),
-                <.td("5"),
-              ),
-              <.tr(
-                <.th(^.scope := "row", "3"),
-                <.td("baz"),
-                <.td("0"),
-              ),
+              props.users.zipWithIndex.map { case (u, idx) =>
+                <.tr(^.key := u.u.id,
+                  <.th(^.scope := "row", idx + 1),
+                  <.td(u.u.name, <.small(^.cls := "ml-1 red", "quitted").when(u.presenceState == Dto.Quitted)),
+                  <.td(u.points)
+                )
+              }.toVdomArray
             )
-          ),
+          )
         )
-      ),
+      )
     }.build
 
 

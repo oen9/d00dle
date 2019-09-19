@@ -2,6 +2,7 @@ package oen.d00dle.services
 import diode.Action
 import org.scalajs.dom.raw.WebSocket
 import oen.d00dle.shared.Dto
+import oen.d00dle.shared.Dto.GameUser
 
 object AppData {
   case class RootModel(wsConnection: WsConnection)
@@ -43,4 +44,5 @@ object AppData {
 
   case class GameStartedA(users: IndexedSeq[Dto.GameUser]) extends Action
   case class InitGameStateA(users: IndexedSeq[Dto.GameUser]) extends Action
+  case class GameUserChangedA(gu: GameUser) extends Action
 }
