@@ -18,6 +18,7 @@ object WebsockMessageHandler {
     case Dto.SomeoneJoinedLobby(lu) => dispatch(SomeoneJoinedLobbyA(lu))
     case Dto.SomeoneLeftLobby(id) => dispatch(SomeoneLeftLobbyA(id))
     case Dto.LobbyUserChanged(lu) => dispatch(LobbyUserChangedA(lu))
+    case Dto.GameStarted(gu) => dispatch(GameStartedA(gu))
 
     case unknown => println(s"[ws] unsupported data: $unknown")
   }

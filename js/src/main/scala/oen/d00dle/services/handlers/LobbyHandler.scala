@@ -26,11 +26,15 @@ class LobbyHandler[M](modelRW: ModelRW[M, Option[Either[String, FullLobby]]]) ex
       updated(newValue)
 
     case LobbyUserChangedA(lu) =>
-      val userToUpdate: Dto.LobbyUser => Boolean = _.u.id == lu.u.id // eachWhere workaroud
+      val userToUpdate: Dto.LobbyUser => Boolean = _.u.id == lu.u.id
       val newValue = value.modify(_.each.eachRight.users.eachWhere(userToUpdate)).setTo(lu)
       updated(newValue)
 
     case QuitLobbyA =>
       updated("You've left this lobby".asLeft[FullLobby].some)
+
+    case _: GameStartedA =>
+      val newValue = value.modify(_.each.eachRight.mode).setTo(GameMode)
+      updated(newValue)
   }
 }

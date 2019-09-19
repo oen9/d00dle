@@ -29,13 +29,20 @@ object LobbyActor {
 
     def startGame(updUsers: Map[Int, LobbyUser]): Behavior[LobbyMsg] = {
       lobbyManager ! LobbyManager.GameStarted(id)
-      // TODO start game SOMEHOW
+
+      updUsers.values.map(_.ref).foreach(ctx.unwatch)
+      val gameRef = ctx.spawn(GameActor(id, updUsers.values.toVector), s"game-$id")
+      ctx.watchWith(gameRef, GameFinished)
+
       ctx.log.info("All users in lobby [{}] ready. Game started!", id)
       behavior(id, name, lobbyManager, updUsers)
       Behaviors.receiveMessage {
         case GameFinished =>
-          ctx.log.error("Game finished. Closing lobby [{}]", id)
+          ctx.log.info("Game finished. Closing lobby [{}]", id)
           Behaviors.stopped
+        case ExitLobby(userId) =>
+          gameRef ! GameActor.UserQuitted(userId)
+          Behaviors.same
         case msg =>
           ctx.log.error("Lobby [{}] already started game. Message [{}] unhandled", id, msg)
           Behaviors.same

@@ -15,6 +15,8 @@ import oen.d00dle.D00dleJS.Loc
 import oen.d00dle.D00dleJS.HomeLoc
 import oen.d00dle.services.AppData.SetReadyA
 import oen.d00dle.services.AppData.SetNotReadyA
+import oen.d00dle.services.AppData.GameMode
+import oen.d00dle.D00dleJS.GameLoc
 
 object Lobby {
 
@@ -56,6 +58,16 @@ object Lobby {
     def onMount = for {
       props <- $.props
       _ <- props.proxy.dispatchCB(JoinLobbyA(props.lobbyId))
+    } yield ()
+
+    def onUpdate = for {
+      props <- $.props
+      mode = for {
+          gameData <- props.proxy()
+          lobby <- gameData.lobby
+          fullLobby <- lobby.toOption
+        } yield fullLobby.mode
+      _ <- mode.filter(_ == GameMode).fold(Callback.empty)(_ => props.router.set(GameLoc))
     } yield ()
 
     def render(props: Props, state: State) =
@@ -158,6 +170,7 @@ object Lobby {
     .initialStateFromProps(props => State(nickname = props.proxy().map(_.user.nickname).fold("unknown")(identity)))
     .renderBackend[Backend]
     .componentDidMount(_.backend.onMount)
+    .componentWillUpdate(_.backend.onUpdate)
     .build
 
   def apply(router: RouterCtl[Loc], proxy: ModelProxy[Option[GameData]], lobbyId: Int) = component(Props(router, proxy, lobbyId))

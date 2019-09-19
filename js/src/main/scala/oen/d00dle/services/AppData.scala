@@ -6,9 +6,18 @@ import oen.d00dle.shared.Dto
 object AppData {
   case class RootModel(wsConnection: WsConnection)
   case class WsConnection(ws: WebSocket, gameData: Option[GameData] = None)
-  case class GameData(user: User, lobbies: IndexedSeq[Dto.LobbyData] = IndexedSeq(), lobby: Option[Either[String, FullLobby]] = None)
+  case class GameData(
+    user: User,
+    lobbies: IndexedSeq[Dto.LobbyData] = IndexedSeq(),
+    lobby: Option[Either[String, FullLobby]] = None,
+    game: Option[GameState] = None
+  )
   case class User(id: Int, nickname: String)
-  case class FullLobby(id: Int, name: String, users: Seq[Dto.LobbyUser])
+  sealed trait LobbyMode
+  case object GameMode extends LobbyMode
+  case object PendingMode extends LobbyMode
+  case class FullLobby(id: Int, name: String, users: Seq[Dto.LobbyUser], mode: LobbyMode = PendingMode)
+  case class GameState(users: Seq[Dto.GameUser])
 
   case object WSConnect extends Action
   case class WSConnected(u: Dto.UserCreated) extends Action
@@ -31,4 +40,6 @@ object AppData {
   case class SomeoneJoinedLobbyA(lu: Dto.LobbyUser) extends Action
   case class SomeoneLeftLobbyA(id: Int) extends Action
   case class LobbyUserChangedA(lu: Dto.LobbyUser) extends Action
+
+  case class GameStartedA(users: IndexedSeq[Dto.GameUser]) extends Action
 }

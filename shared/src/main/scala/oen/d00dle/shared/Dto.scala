@@ -1,13 +1,17 @@
 package oen.d00dle.shared
 
 object Dto {
+  case class User(id: Int, name: String)
+
   sealed trait ReadyState
   case object Ready extends ReadyState
   case object NotReady extends ReadyState
-
-  case class User(id: Int, name: String)
   case class LobbyUser(u: User, readyState: ReadyState = NotReady)
-  case class GameUser(u: User, points: Int)
+
+  sealed trait PresenceState
+  case object Present extends PresenceState
+  case object Quitted extends PresenceState
+  case class GameUser(u: User, points: Int = 0, presenceState: PresenceState = Present)
 
   sealed trait WsData
 
@@ -26,6 +30,9 @@ object Dto {
   case class SomeoneJoinedLobby(lu: LobbyUser) extends Event
   case class SomeoneLeftLobby(id: Int) extends Event
   case class LobbyUserChanged(lu: LobbyUser) extends Event
+
+  case class GameStarted(users: IndexedSeq[GameUser]) extends Event
+  case class GameUserChanged(gu: GameUser) extends Event
 
   sealed trait Cmd extends WsData
   case class Log(msg: String) extends Cmd
