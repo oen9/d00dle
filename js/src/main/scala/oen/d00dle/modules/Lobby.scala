@@ -55,12 +55,20 @@ object Lobby {
       _ <- props.proxy.dispatchCB(SetNotReadyA)
     } yield ()
 
-    def onMount = for {
+    def joinLobby = for {
       props <- $.props
       _ <- props.proxy.dispatchCB(JoinLobbyA(props.lobbyId))
     } yield ()
 
-    def onUpdate = for {
+    def onMount = for {
+      props <- $.props
+      _ <- props.proxy()
+                .flatMap(_.lobby.flatMap(_.toOption))
+                .filter(_.id == props.lobbyId)
+                .fold(joinLobby)(_ => tryJumpToGame)
+    } yield ()
+
+    def tryJumpToGame = for {
       props <- $.props
       mode = for {
           gameData <- props.proxy()
@@ -170,7 +178,7 @@ object Lobby {
     .initialStateFromProps(props => State(nickname = props.proxy().map(_.user.nickname).fold("unknown")(identity)))
     .renderBackend[Backend]
     .componentDidMount(_.backend.onMount)
-    .componentWillUpdate(_.backend.onUpdate)
+    .componentWillUpdate(_.backend.tryJumpToGame)
     .build
 
   def apply(router: RouterCtl[Loc], proxy: ModelProxy[Option[GameData]], lobbyId: Int) = component(Props(router, proxy, lobbyId))

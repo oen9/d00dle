@@ -3,16 +3,21 @@ package oen.d00dle.modules
 import diode.react.ModelProxy
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import oen.d00dle.services.AppData.RootModel
 import oen.d00dle.components.CanvasDraw
 import oen.d00dle.components.BlockPicker
 import oen.d00dle.components.SketchPicker
 import japgolly.scalajs.react.vdom.HtmlStyles.color
 import scala.scalajs.js
+import oen.d00dle.services.AppData.GameData
+import oen.d00dle.services.AppData.GameState
+import japgolly.scalajs.react.extra.router.RouterCtl
+import oen.d00dle.D00dleJS.Loc
+import oen.d00dle.D00dleJS.HomeLoc
+import oen.d00dle.components.PointsList
 
 object Game {
 
-  case class Props(proxy: ModelProxy[RootModel])
+  case class Props(router: RouterCtl[Loc], proxy: ModelProxy[Option[GameData]])
   case class State(color: String = "#03a9f4", brushRadius: Int = 1, lazyRadius: Int = 0)
 
   class Backend($: BackendScope[Props, State]) {
@@ -36,7 +41,19 @@ object Game {
     private[this] val ref = Ref.toJsComponent(CanvasDraw.component)
     private[this] def getCanvasOps: CanvasDraw.CanvasDrawOps = ref.raw.current.asInstanceOf[CanvasDraw.CanvasDrawOps]
 
-    def render(props: Props, state: State) =
+    def render(props: Props, state: State) = (for {
+      gameData <- props.proxy()
+      gameState <- gameData.game
+    } yield fullRender(gameState, state)).getOrElse {
+      <.div(
+        <.div(^.cls := "d-flex justify-content-center", <.div("You aren't connected to any game. Find a new one!")),
+        <.div(^.cls := "d-flex justify-content-center",
+          props.router.link(HomeLoc)(^.cls := "btn btn-primary", "jump to lobbies")
+        )
+      )
+    }
+
+    def fullRender(gameState: GameState, state: State) =
       React.Fragment(
         <.div(^.cls :="modal", ^.id := "customColorModal", ^.tabIndex := -1, ^.role := "dialog",
           <.div(^.cls :="modal-dialog modal-dialog-centered", ^.role := "document",
@@ -70,7 +87,8 @@ object Game {
           <.div(^.cls := "col col-md-2",
             <.div(^.cls := "row",
               <.div(^.cls := "col d-flex justify-content-center",
-                BlockPicker(triangle = "hide",
+                BlockPicker(
+                  triangle = "hide",
                   color = state.color,
                   onChangeComplete = changeColor _,
                   colors = js.Array("#f44336", "#e91e63", "#9c27b0", "#673ab7", "#3f51b5",
@@ -141,36 +159,7 @@ object Game {
           <.div(^.cls := "col col-md-2",
             <.div(^.cls := "row",
               <.div(^.cls := "col",
-                <.div(^.cls := "row",
-                  <.div(^.cls := "ranking overflow-auto w-100",
-                    <.table(^.cls := "table table-striped",
-                      <.thead(
-                        <.tr(
-                          <.th("#"),
-                          <.th("nickname"),
-                          <.th("score")
-                        ),
-                      ),
-                      <.tbody(
-                        <.tr(
-                          <.th(^.scope := "row", "1"),
-                          <.td("foo"),
-                          <.td("10")
-                        ),
-                        <.tr(
-                          <.th(^.scope := "row", "2"),
-                          <.td("bar"),
-                          <.td("5"),
-                        ),
-                        <.tr(
-                          <.th(^.scope := "row", "3"),
-                          <.td("baz"),
-                          <.td("0"),
-                        ),
-                      )
-                    ),
-                  )
-                ),
+                PointsList(gameState.users),
 
                 <.div(^.cls := "row pt-2",
                   <.div(^.cls := "chat overflow-auto w-100",
@@ -209,5 +198,5 @@ object Game {
     .renderBackend[Backend]
     .build
 
-  def apply(proxy: ModelProxy[RootModel]) = component(Props(proxy))
+  def apply(router: RouterCtl[Loc], proxy: ModelProxy[Option[GameData]]) = component(Props(router, proxy))
 }

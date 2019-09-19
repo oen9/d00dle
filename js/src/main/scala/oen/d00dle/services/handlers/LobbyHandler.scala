@@ -7,6 +7,7 @@ import diode.ActionResult
 import com.softwaremill.quicklens._
 import cats.implicits._
 import oen.d00dle.shared.Dto
+import diode.Effect
 
 class LobbyHandler[M](modelRW: ModelRW[M, Option[Either[String, FullLobby]]]) extends ActionHandler(modelRW) {
 
@@ -33,8 +34,9 @@ class LobbyHandler[M](modelRW: ModelRW[M, Option[Either[String, FullLobby]]]) ex
     case QuitLobbyA =>
       updated("You've left this lobby".asLeft[FullLobby].some)
 
-    case _: GameStartedA =>
+    case GameStartedA(users) =>
       val newValue = value.modify(_.each.eachRight.mode).setTo(GameMode)
-      updated(newValue)
+      import scala.concurrent.ExecutionContext.Implicits.global
+      updated(newValue, Effect.action(InitGameStateA(users)))
   }
 }

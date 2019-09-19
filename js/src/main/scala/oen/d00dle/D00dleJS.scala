@@ -28,8 +28,8 @@ object D00dleJS {
 
     Bootstrap
 
-    val homeWrapper = AppCircuit.connect(identity(_))
-    val gameWrapper = AppCircuit.connect(_.wsConnection.gameData.fold(GameData(User(0, "error")))(identity))
+    val homeWrapper = AppCircuit.connect(_.wsConnection.gameData.fold(GameData(User(0, "error")))(identity))
+    val gameWrapper = AppCircuit.connect(_.wsConnection.gameData)
     val layoutWrapper = AppCircuit.connect(_.wsConnection.gameData)
     val lobbyWrapper = AppCircuit.connect(_.wsConnection.gameData)
 
@@ -37,10 +37,10 @@ object D00dleJS {
       import dsl._
 
       (emptyRule
-        | staticRoute(root, HomeLoc) ~> renderR(router => gameWrapper(Home(router, _)))
+        | staticRoute(root, HomeLoc) ~> renderR(router => homeWrapper(Home(router, _)))
         | staticRoute("#about", AboutLoc) ~> render(About())
         | dynamicRouteCT("#lobby" / int.caseClass[LobbyLoc]) ~> dynRenderR((loc, router) => lobbyWrapper(Lobby(router, _, loc.id)))
-        | staticRoute("#game", GameLoc) ~> render(homeWrapper(Game.apply))
+        | staticRoute("#game", GameLoc) ~> renderR(router => gameWrapper(Game(router, _)))
         )
         .notFound(redirectToPage(HomeLoc)(Redirect.Replace))
         .setTitle(p => s"d00dle - ${p.name}")

@@ -17,7 +17,7 @@ object AppData {
   case object GameMode extends LobbyMode
   case object PendingMode extends LobbyMode
   case class FullLobby(id: Int, name: String, users: Seq[Dto.LobbyUser], mode: LobbyMode = PendingMode)
-  case class GameState(users: Seq[Dto.GameUser])
+  case class GameState(users: IndexedSeq[Dto.GameUser])
 
   case object WSConnect extends Action
   case class WSConnected(u: Dto.UserCreated) extends Action
@@ -42,4 +42,5 @@ object AppData {
   case class LobbyUserChangedA(lu: Dto.LobbyUser) extends Action
 
   case class GameStartedA(users: IndexedSeq[Dto.GameUser]) extends Action
+  case class InitGameStateA(users: IndexedSeq[Dto.GameUser]) extends Action
 }

@@ -7,6 +7,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import oen.d00dle.D00dleJS.GameLoc
 import diode.react.ModelProxy
 import oen.d00dle.services.AppData.GameData
+import oen.d00dle.D00dleJS.LobbyLoc
 
 object Layout {
 
@@ -20,6 +21,19 @@ object Layout {
 
   class Backend($: BackendScope[Props, Unit]) {
     def render(props: Props) = {
+
+      def yourGameLink(props: Props) = {
+        val maybeLobbyId = for {
+          gameData <- props.proxy()
+          lobby <- gameData.lobby
+          fullLobby <- lobby.toOption
+        } yield fullLobby.id
+
+        maybeLobbyId.fold(<.span(^.cls := "nav-link disabled", "not in game"): VdomElement){ lobbyId =>
+          props.router.link(LobbyLoc(lobbyId))(^.cls := "nav-link", "GAME IS READY")
+        }
+      }
+
       def nav(props: Props) =
         <.div(^.cls := "navbar navbar-expand-md navbar-dark bg-dark",
           props.router.link(HomeLoc)(
@@ -34,7 +48,8 @@ object Layout {
             <.ul(^.cls := "navbar-nav mr-auto",
               menuItems.map(item =>
                 <.li(^.key := item.name, ^.cls := "nav-item", (^.cls := "active").when(props.resolution.page == item),
-                  props.router.link(item)(^.cls := "nav-link", item.name)
+                  if (item == GameLoc) yourGameLink(props)
+                  else props.router.link(item)(^.cls := "nav-link", item.name)
                 )
               ).toVdomArray
             )
