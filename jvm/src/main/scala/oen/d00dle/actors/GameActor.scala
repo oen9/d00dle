@@ -46,8 +46,10 @@ object GameActor {
 
   def broadcastMessage(users: Vector[GameUser], dto: Dto.WsData): Unit = {
     val msg = UserActor.Forward(dto)
-    users.map(_.ref).flatten.foreach(_ ! msg)
+    broadcastMessage(users, msg)
   }
+
+  def broadcastMessage(users: Vector[GameUser], msg: UserActor.UserActorMsg) = users.map(_.ref).flatten.foreach(_ ! msg)
 
   def apply(gameId: Int, lobbyUsers: Vector[LobbyActor.LobbyUser]): Behavior[GameActorMsg] = Behaviors.setup { ctx =>
     val gameUsers = lobbyUsers.map(
@@ -56,7 +58,7 @@ object GameActor {
       .transform
     )
     lobbyUsers.foreach(u => ctx.watchWith(u.ref, UserQuitted(u.dtoData.u.id)))
-    broadcastMessage(gameUsers, Dto.GameStarted(gameUsers.map(_.dtoData)))
+    broadcastMessage(gameUsers, UserActor.InitGame(ctx.self, gameUsers.map(_.dtoData)))
     behavior(GameState(gameId, gameUsers))
   }
 }
