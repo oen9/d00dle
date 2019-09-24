@@ -28,5 +28,8 @@ class WebsockCmdHandler[M](modelRW: ModelRW[M, WsConnection]) extends ActionHand
 
     case SetNotReadyA =>
       effectOnly(Websock.sendAsEffect(value.ws, Dto.SetNotReady))
+
+    case SendNewChatMsgA(msg) =>
+      effectOnly(Websock.sendAsEffect(value.ws, Dto.SendNewChantMsg(msg)))
   }
 }

@@ -1,4 +1,4 @@
-package oen.d00dle.components
+package oen.d00dle.components.bridge
 
 import scala.scalajs.js.annotation.JSImport
 import scala.scalajs.js

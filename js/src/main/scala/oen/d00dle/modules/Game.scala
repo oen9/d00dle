@@ -3,9 +3,8 @@ package oen.d00dle.modules
 import diode.react.ModelProxy
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import oen.d00dle.components.CanvasDraw
-import oen.d00dle.components.BlockPicker
-import oen.d00dle.components.SketchPicker
+import oen.d00dle.components.bridge.CanvasDraw
+import oen.d00dle.components.bridge.BlockPicker
 import japgolly.scalajs.react.vdom.HtmlStyles.color
 import scala.scalajs.js
 import oen.d00dle.services.AppData.GameData
@@ -13,12 +12,16 @@ import oen.d00dle.services.AppData.GameState
 import japgolly.scalajs.react.extra.router.RouterCtl
 import oen.d00dle.D00dleJS.Loc
 import oen.d00dle.D00dleJS.HomeLoc
-import oen.d00dle.components.PointsList
+import oen.d00dle.components.ScoreList
+import oen.d00dle.components.Chat
+import oen.d00dle.components.CustomColorButton
+import oen.d00dle.services.AppData.SendNewChatMsgA
+import oen.d00dle.services.AppData.User
 
 object Game {
 
   case class Props(router: RouterCtl[Loc], proxy: ModelProxy[Option[GameData]])
-  case class State(color: String = "#03a9f4", brushRadius: Int = 1, lazyRadius: Int = 0)
+  case class State(color: String = "#03a9f4", brushRadius: Int = 1, lazyRadius: Int = 0, chatMsg: String = "")
 
   class Backend($: BackendScope[Props, State]) {
     def changeColor(newColor: BlockPicker.ColorEvt) = $.modState(_.copy(color = newColor.hex))
@@ -38,13 +41,29 @@ object Game {
       _ <- $.modState(_.copy(lazyRadius = newValue))
     } yield ()
 
+    def updateChatMsg(e: ReactEventFromInput): Callback = {
+      val newValue = e.target.value
+      $.modState(_.copy(chatMsg = newValue))
+    }
+
+    def acceptChatMsg(e: ReactEvent) = for {
+      _ <- e.preventDefaultCB
+      state <- $.state
+      props <- $.props
+      _ <- if (state.chatMsg.nonEmpty)
+            props.proxy.dispatchCB(SendNewChatMsgA(state.chatMsg)) >>
+            $.modState(_.copy(chatMsg = ""))
+          else Callback.empty
+    } yield ()
+
     private[this] val ref = Ref.toJsComponent(CanvasDraw.component)
     private[this] def getCanvasOps: CanvasDraw.CanvasDrawOps = ref.raw.current.asInstanceOf[CanvasDraw.CanvasDrawOps]
 
     def render(props: Props, state: State) = (for {
       gameData <- props.proxy()
       gameState <- gameData.game
-    } yield fullRender(gameState, state)).getOrElse {
+      user = gameData.user
+    } yield fullRender(gameState, user, state)).getOrElse {
       <.div(
         <.div(^.cls := "d-flex justify-content-center", <.div("You aren't connected to any game. Find a new one!")),
         <.div(^.cls := "d-flex justify-content-center",
@@ -53,36 +72,8 @@ object Game {
       )
     }
 
-    def fullRender(gameState: GameState, state: State) =
+    def fullRender(gameState: GameState, me: User, state: State) =
       React.Fragment(
-        <.div(^.cls :="modal", ^.id := "customColorModal", ^.tabIndex := -1, ^.role := "dialog",
-          <.div(^.cls :="modal-dialog modal-dialog-centered", ^.role := "document",
-            <.div(^.cls := "modal-content",
-              <.div(^.cls := "modal-header",
-                <.h5(^.cls := "modal-title", "Pick custom color"),
-                <.button(^.tpe := "button", ^.cls := "close", VdomAttr("data-dismiss") := "modal", ^.aria.label := "Close",
-                  <.span(^.aria.hidden := "true", "×"),
-                ),
-              ),
-              <.div(^.cls :="modal-body d-flex justify-content-center",
-                SketchPicker(
-                  color = state.color,
-                  onChangeComplete = changeColor _
-                )
-              ),
-              <.div(^.cls :="modal-footer",
-                <.button(^.tpe := "button", ^.cls :="btn btn-primary", VdomAttr("data-dismiss") := "modal", "Close"),
-              )
-            )
-          )
-        ),
-
-
-
-
-
-
-
         <.div(^.cls := "row",
           <.div(^.cls := "col col-md-2",
             <.div(^.cls := "row",
@@ -100,10 +91,7 @@ object Game {
             ),
             <.div(^.cls := "row pt-2",
               <.div(^.cls := "col text-center",
-                <.button(^.tpe := "button", ^.cls := "btn btn-primary w-100",
-                  VdomAttr("data-toggle") :="modal", VdomAttr("data-target") := "#customColorModal",
-                  "custom color", <.i(^.cls := "fas fa-palette pl-2")
-                ),
+                CustomColorButton(state.color, changeColor)
               )
             ),
             <.div(^.cls := "row mt-2",
@@ -159,33 +147,16 @@ object Game {
           <.div(^.cls := "col col-md-2",
             <.div(^.cls := "row",
               <.div(^.cls := "col",
-                PointsList(gameState.users),
-
-                <.div(^.cls := "row pt-2",
-                  <.div(^.cls := "chat overflow-auto w-100",
-                      <.div("foo: cat"),
-                      <.div("bar: dog"),
-                      <.div("foo: cat"),
-                      <.div("bar: dog"),
-                      <.div("foo: cat"),
-                      <.div("bar: dog"),
-                      <.div("foo: cat"),
-                      <.div("bar: dog"),
-                      <.div("foo: cat"),
-                      <.div("bar: dog"),
-                      <.div("foo: cat"),
-                      <.div("bar: dog"),
-                      <.div("foo: cat"),
-                      <.div("bar: dog"),
-                    )
-                ),
-                <.div(^.cls := "row pt-2",
-                  <.input(^.cls := "form-control w-100", ^.tpe := "text")
-                ),
-                <.div(^.cls := "row pt-2",
-                  <.button(^.cls := "btn btn-primary w-100", "send")
+                ScoreList(gameState.users),
+                Chat(me, gameState.msgs),
+                <.form(
+                  <.div(^.cls := "row pt-2",
+                    <.input(^.cls := "form-control w-100", ^.tpe := "text", ^.value := state.chatMsg, ^.onChange ==> updateChatMsg)
+                  ),
+                  <.div(^.cls := "row pt-2",
+                    <.button(^.cls := "btn btn-primary w-100", "guess", ^.onClick ==> acceptChatMsg)
+                  )
                 )
-
               )
             )
           )

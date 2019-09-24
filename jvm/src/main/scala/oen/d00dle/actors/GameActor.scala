@@ -10,6 +10,7 @@ import cats.implicits._
 object GameActor {
   sealed trait GameActorMsg
   case class UserQuitted(userId: Int) extends GameActorMsg
+  case class SendChatMsg(nickname: String, userId: Int, msg: String) extends GameActorMsg
 
   case class GameUser(ref: Option[ActorRef[UserActor.UserActorMsg]], dtoData: Dto.GameUser)
   case class GameState(id: Int, users: Vector[GameUser])
@@ -17,6 +18,11 @@ object GameActor {
   def behavior(state: GameState): Behavior[GameActorMsg] = Behaviors.receive { case (ctx, msg) =>
 
     msg match {
+      case SendChatMsg(nickname, userId, msg) =>
+        // TODO handle an attempt to guess
+        broadcastMessage(state.users, Dto.NewChatMsg(Dto.ChatMsg(nickname, userId, msg, Dto.NotGuessed)))
+        Behaviors.same
+
       case UserQuitted(userId) =>
         val userByIdPredicate: GameUser => Boolean = _.dtoData.u.id == userId
         state.users.find(userByIdPredicate) match {
@@ -59,6 +65,9 @@ object GameActor {
     )
     lobbyUsers.foreach(u => ctx.watchWith(u.ref, UserQuitted(u.dtoData.u.id)))
     broadcastMessage(gameUsers, UserActor.InitGame(ctx.self, gameUsers.map(_.dtoData)))
+    broadcastMessage(gameUsers, Dto.NewChatMsg(systemChatMsgTemplate.copy(msg = "Welcome!")))
     behavior(GameState(gameId, gameUsers))
   }
+
+  val systemChatMsgTemplate = Dto.ChatMsg("system", -1, "", Dto.SystemMsg)
 }

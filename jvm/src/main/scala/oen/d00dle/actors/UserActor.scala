@@ -85,6 +85,10 @@ object UserActor {
         currentLobby.foreach(_.ref ! LobbyActor.SetNotReady(id))
         Behavior.same
 
+      case InData(SendNewChantMsg(msg)) =>
+        currentGame.foreach(_ ! GameActor.SendChatMsg(nickname, id, msg))
+        Behaviors.same
+
       case InitGame(gameRef, gameUsers) =>
         outRef ! ToOut(GameStarted(gameUsers))
         behavior(id, outRef, nickname, lobbyManager, findLobbyResponseMapper, currentLobby, gameRef.some)

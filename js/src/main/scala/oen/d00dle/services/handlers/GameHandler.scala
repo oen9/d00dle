@@ -18,5 +18,9 @@ class GameHandler[M](modelRW: ModelRW[M, Option[GameState]]) extends ActionHandl
       val userById: GameUser => Boolean = _.u.id == gu.u.id
       val newValue = value.modify(_.each.users.eachWhere(userById)).setTo(gu)
       updated(newValue)
+
+    case NewChatMsgA(msg) =>
+      val newValue = value.modify(_.each.msgs).using(_ :+ msg)
+      updated(newValue)
   }
 }

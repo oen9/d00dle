@@ -1,4 +1,4 @@
-package oen.d00dle.components
+package oen.d00dle.components.bridge
 
 import com.payalabs.scalajs.react.bridge.{ReactBridgeComponent, WithPropsNoChildren}
 import scala.scalajs.js.annotation.JSImport

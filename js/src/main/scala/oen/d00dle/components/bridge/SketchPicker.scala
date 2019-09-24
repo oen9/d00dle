@@ -1,4 +1,4 @@
-package oen.d00dle.components
+package oen.d00dle.components.bridge
 
 import com.payalabs.scalajs.react.bridge.{ReactBridgeComponent, WithPropsNoChildren}
 import scala.scalajs.js.annotation.JSImport
@@ -8,7 +8,6 @@ import japgolly.scalajs.react.Callback
 object SketchPicker extends ReactBridgeComponent {
 
   @JSImport("react-color", "SketchPicker")
-  // @JSImport("react-color", JSImport.Default)
   @js.native
   object RawComponent extends js.Object
 
