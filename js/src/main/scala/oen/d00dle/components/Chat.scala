@@ -25,7 +25,7 @@ object Chat {
           props.msgs.zipWithIndex.map { case (msg, msgId) =>
               msg.chatMsgType match {
                 case Dto.SystemMsg =>
-                  <.div(^.key := msgId, ^.cls := "alert alert-primary", msg.msg)
+                  <.div(^.key := msgId, ^.cls := "alert alert-primary mb-0", msg.msg)
                 case _ =>
                   <.div(^.key := msgId,
                     (^.cls := "chat-me").when(msg.userId == props.me.id),

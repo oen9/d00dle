@@ -21,6 +21,8 @@ object WebsockMessageHandler {
     case Dto.GameStarted(gu) => dispatch(GameStartedA(gu))
     case Dto.GameUserChanged(gu) => dispatch(GameUserChangedA(gu))
     case Dto.NewChatMsg(msg) => dispatch(NewChatMsgA(msg))
+    case Dto.NowDraws(uId) => dispatch(NowDrawsA(uId))
+    case Dto.YouDraw(secret) => dispatch(YouDrawA(secret))
 
     case unknown => println(s"[ws] unsupported data: $unknown")
   }

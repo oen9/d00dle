@@ -127,8 +127,9 @@ object Game {
           ),
           <.div(^.cls := "col col-md-8",
             <.div(^.cls := "row p-2",
-              <.div(^.cls := "alert alert-warning w-100 text-center", "YOUR TURN! Try to draw: ", <.b("car")),
-              <.div(^.cls := "alert alert-info w-100 text-center", "Guess what's that!")
+              gameState.secret.fold(<.div(^.cls := "alert alert-info w-100 text-center", "Guess what's that!")) { secret =>
+                <.div(^.cls := "alert alert-warning w-100 text-center", "YOUR TURN! Try to draw: ", <.b(secret)),
+              }
             ),
             <.div(^.cls := "row p-2",
               <.div(^.cls := "col overflow-auto",
