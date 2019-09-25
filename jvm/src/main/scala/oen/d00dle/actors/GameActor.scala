@@ -13,15 +13,31 @@ object GameActor {
   case class SendChatMsg(nickname: String, userId: Int, msg: String) extends GameActorMsg
 
   case class GameUser(ref: Option[ActorRef[UserActor.UserActorMsg]], dtoData: Dto.GameUser)
-  case class GameState(id: Int, users: Vector[GameUser])
+  case class GameState(id: Int, users: Vector[GameUser], draftsman: GameUser, queue: Vector[GameUser], secret: String)
 
   def behavior(state: GameState): Behavior[GameActorMsg] = Behaviors.receive { case (ctx, msg) =>
 
     msg match {
       case SendChatMsg(nickname, userId, msg) =>
-        // TODO handle an attempt to guess
-        broadcastMessage(state.users, Dto.NewChatMsg(Dto.ChatMsg(nickname, userId, msg, Dto.NotGuessed)))
-        Behaviors.same
+        val guessState = if (msg == state.secret && userId != state.draftsman.dtoData.u.id) Dto.Guessed else Dto.NotGuessed
+        broadcastMessage(state.users, Dto.NewChatMsg(Dto.ChatMsg(nickname, userId, msg, guessState)))
+        guessState match {
+          case Dto.Guessed =>
+            val (newDraftsman, newQueue, newSecret) = initNextDrawing(state.queue :+ state.draftsman)
+            val updUsers = updateScores(state.draftsman, userId, state.users)
+            updUsers
+              .filter(u => u.dtoData.u.id == userId || u.dtoData.u.id == state.draftsman.dtoData.u.id)
+              .foreach(broadcastUserChanged(updUsers, _))
+            val newState = state.copy(
+              users = updUsers,
+              draftsman = newDraftsman,
+              queue = newQueue,
+              secret = newSecret
+            )
+            behavior(newState)
+          case _ =>
+            Behaviors.same
+        }
 
       case UserQuitted(userId) =>
         val userByIdPredicate: GameUser => Boolean = _.dtoData.u.id == userId
@@ -66,8 +82,44 @@ object GameActor {
     lobbyUsers.foreach(u => ctx.watchWith(u.ref, UserQuitted(u.dtoData.u.id)))
     broadcastMessage(gameUsers, UserActor.InitGame(ctx.self, gameUsers.map(_.dtoData)))
     broadcastMessage(gameUsers, Dto.NewChatMsg(systemChatMsgTemplate.copy(msg = "Welcome!")))
-    behavior(GameState(gameId, gameUsers))
+
+    val (draftsman, queue, secret) = initNextDrawing(gameUsers)
+
+    behavior(GameState(
+      id = gameId,
+      users = gameUsers,
+      draftsman = draftsman,
+      queue = queue,
+      secret = secret
+    ))
+
+  }
+
+  def initNextDrawing(users: Vector[GameUser]): (GameUser, Vector[GameUser], String) = {
+    val draftsman = users.head
+    val queue = users.tail
+
+    val nextSecret = getDummySecret
+
+    broadcastMessage(queue, Dto.NowDraws(draftsman.dtoData.u.id))
+    draftsman.ref.foreach(_ ! UserActor.Forward(Dto.YouDraw(nextSecret)))
+
+    (draftsman, queue, nextSecret)
+  }
+
+  def updateScores(draftsman: GameUser, winnerId: Int, users: Vector[GameUser]): Vector[GameUser] = {
+    val draftsmanScore = 15
+    val winnerScore = 10
+
+    val draftsmanPredicate: GameUser => Boolean = _.dtoData.u.id == draftsman.dtoData.u.id
+    val winnerPredicate: GameUser => Boolean = _.dtoData.u.id == winnerId
+
+    users
+      .modify(_.eachWhere(draftsmanPredicate).dtoData.points).using(_ + draftsmanScore)
+      .modify(_.eachWhere(winnerPredicate).dtoData.points).using(_ + winnerScore)
   }
 
   val systemChatMsgTemplate = Dto.ChatMsg("system", -1, "", Dto.SystemMsg)
+  val dummySecrets = Vector("cat", "dog", "car", "eye", "hand", "water")
+  def getDummySecret: String = dummySecrets.get(scala.util.Random.nextInt(dummySecrets.length)).getOrElse("child")
 }
