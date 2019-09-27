@@ -23,6 +23,7 @@ object WebsockMessageHandler {
     case Dto.NewChatMsg(msg) => dispatch(NewChatMsgA(msg))
     case Dto.NowDraws(uId) => dispatch(NowDrawsA(uId))
     case Dto.YouDraw(secret) => dispatch(YouDrawA(secret))
+    case Dto.PictureChanged(value) => dispatch(PictureChangedA(value))
 
     case unknown => println(s"[ws] unsupported data: $unknown")
   }

@@ -20,6 +20,7 @@ object Dto {
   case class LobbyList(lobbies: IndexedSeq[LobbyData]) extends WsData
 
   sealed trait Event extends WsData
+
   case class UserCreated(id: Int, nickname: String) extends Event
   case class NicknameChanged(id: Int, nickname: String) extends Event
 
@@ -33,6 +34,9 @@ object Dto {
 
   case class GameStarted(users: IndexedSeq[GameUser]) extends Event
   case class GameUserChanged(gu: GameUser) extends Event
+  case class NowDraws(userId: Int) extends Event
+  case class YouDraw(secret: String) extends Event
+  case class PictureChanged(value: String) extends Event
 
   sealed trait ChatMsgType
   case object NotGuessed extends ChatMsgType
@@ -40,10 +44,9 @@ object Dto {
   case object SystemMsg extends ChatMsgType
   case class ChatMsg(nickname: String, userId: Int, msg: String, chatMsgType: ChatMsgType)
   case class NewChatMsg(msg: ChatMsg) extends Event
-  case class NowDraws(userId: Int) extends Event
-  case class YouDraw(secret: String) extends Event
 
   sealed trait Cmd extends WsData
+
   case class Log(msg: String) extends Cmd
   case class ChangeNickname(nickname: String) extends Cmd
   case class CreateLobby(name: String) extends Cmd
@@ -53,6 +56,7 @@ object Dto {
   case object SetNotReady extends Cmd
 
   case class SendNewChantMsg(msg: String) extends Cmd
+  case class ChangePicture(value: String) extends Cmd
 
   import io.circe.generic.extras.Configuration
   implicit val circeConfig = Configuration.default.withDiscriminator("type").withDefaults

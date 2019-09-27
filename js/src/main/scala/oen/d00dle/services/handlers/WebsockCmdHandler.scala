@@ -31,5 +31,8 @@ class WebsockCmdHandler[M](modelRW: ModelRW[M, WsConnection]) extends ActionHand
 
     case SendNewChatMsgA(msg) =>
       effectOnly(Websock.sendAsEffect(value.ws, Dto.SendNewChantMsg(msg)))
+
+    case ChangePictureA(pic) =>
+      effectOnly(Websock.sendAsEffect(value.ws, Dto.ChangePicture(pic)))
   }
 }

@@ -32,6 +32,7 @@ class GameHandler[M](modelRW: ModelRW[M, Option[GameState]]) extends ActionHandl
       } yield state
                 .modify(_.msgs).using(_ :+ msg)
                 .modify(_.secret).setTo(None)
+                .modify(_.picture).setTo(None)
       updated(newValue)
 
     case YouDrawA(secret) =>
@@ -41,6 +42,11 @@ class GameHandler[M](modelRW: ModelRW[M, Option[GameState]]) extends ActionHandl
       } yield state
                 .modify(_.msgs).using(_ :+ msg)
                 .modify(_.secret).setTo(secret.some)
+                .modify(_.picture).setTo(None)
+      updated(newValue)
+
+    case PictureChangedA(pic) =>
+      val newValue = value.modify(_.each.picture).setTo(pic.some)
       updated(newValue)
   }
 }

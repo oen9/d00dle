@@ -89,6 +89,10 @@ object UserActor {
         currentGame.foreach(_ ! GameActor.SendChatMsg(nickname, id, msg))
         Behaviors.same
 
+      case InData(ChangePicture(value)) =>
+        currentGame.foreach(_ ! GameActor.ChangePicture(value))
+        Behaviors.same
+
       case InitGame(gameRef, gameUsers) =>
         outRef ! ToOut(GameStarted(gameUsers))
         behavior(id, outRef, nickname, lobbyManager, findLobbyResponseMapper, currentLobby, gameRef.some)

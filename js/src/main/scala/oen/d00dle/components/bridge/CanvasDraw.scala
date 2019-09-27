@@ -30,7 +30,9 @@ object CanvasDraw {
     brushRadius: js.UndefOr[Int] = js.undefined,
     backgroundColor: js.UndefOr[String] = js.undefined,
     lazyRadius: js.UndefOr[Int] = js.undefined,
-    brushColor: js.UndefOr[String] = js.undefined
+    brushColor: js.UndefOr[String] = js.undefined,
+    disabled: js.UndefOr[Boolean] = js.undefined,
+    saveData: js.UndefOr[String] = js.undefined,
   ): Props = {
     js.Dynamic.literal(
       canvasWidth = canvasWidth,
@@ -38,9 +40,14 @@ object CanvasDraw {
       brushColor = brushColor,
       brushRadius = brushRadius,
       backgroundColor = backgroundColor,
-      lazyRadius = lazyRadius
+      lazyRadius = lazyRadius,
+      disabled = disabled,
+      saveData = saveData,
+      immediateLoading = true,
+      loadTimeOffset = 0
     ).asInstanceOf[Props]
   }
 
   val component = JsComponent[Props, Children.Varargs, Null](RawComponent)
+  val emptyValue: String = """{"lines":[],"width":800,"height":600}"""
 }

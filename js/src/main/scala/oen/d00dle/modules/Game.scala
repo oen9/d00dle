@@ -17,11 +17,21 @@ import oen.d00dle.components.Chat
 import oen.d00dle.components.CustomColorButton
 import oen.d00dle.services.AppData.SendNewChatMsgA
 import oen.d00dle.services.AppData.User
+import scala.scalajs.js
+import cats.implicits._
+import oen.d00dle.services.AppData.ChangePictureA
 
 object Game {
 
   case class Props(router: RouterCtl[Loc], proxy: ModelProxy[Option[GameData]])
-  case class State(color: String = "#03a9f4", brushRadius: Int = 1, lazyRadius: Int = 0, chatMsg: String = "")
+  case class State(
+    color: String = "#03a9f4",
+    brushRadius: Int = 1,
+    lazyRadius: Int = 0,
+    chatMsg: String = "",
+    interval: Option[js.timers.SetIntervalHandle] = None,
+    picture: String = ""
+  )
 
   class Backend($: BackendScope[Props, State]) {
     def changeColor(newColor: BlockPicker.ColorEvt) = $.modState(_.copy(color = newColor.hex))
@@ -54,6 +64,43 @@ object Game {
             props.proxy.dispatchCB(SendNewChatMsgA(state.chatMsg)) >>
             $.modState(_.copy(chatMsg = ""))
           else Callback.empty
+    } yield ()
+
+    def tick() = for {
+      state <- $.state
+      props <- $.props
+      newPicture = getCanvasOps.getSaveData()
+      _ <- if (state.picture != newPicture)
+              props.proxy.dispatchCB(ChangePictureA(newPicture)) >>
+              $.modState(_.copy(picture = newPicture))
+            else Callback.empty
+    } yield ()
+
+    def startOrStopInterval() = for {
+      state <- $.state
+      props <- $.props
+      secret = props.proxy().flatMap(_.game).flatMap(_.secret)
+      interval = state.interval
+      _ <- (secret, interval) match {
+        case (Some(_), None) => initInterval
+        case (None, Some(_)) => clearInterval
+        case _ => Callback.empty
+      }
+    } yield ()
+
+    def initInterval = $.modState { state =>
+      val interval = js.timers.setInterval(2000)(tick.runNow())
+      state.copy(interval = interval.some)
+    }
+
+    def clearInterval(): Callback = $.modState { state =>
+      state.interval.foreach(js.timers.clearInterval)
+      state.copy(interval = None)
+    }
+
+    def willUnmount(): Callback = for {
+      state <- $.state
+      _ <- Callback(state.interval.foreach(js.timers.clearInterval))
     } yield ()
 
     private[this] val ref = Ref.toJsComponent(CanvasDraw.component)
@@ -139,7 +186,9 @@ object Game {
                     brushColor = state.color,
                     canvasHeight = 600,
                     brushRadius = state.brushRadius,
-                    lazyRadius = state.lazyRadius
+                    lazyRadius = state.lazyRadius,
+                    disabled = gameState.secret.fold(true)(_ => false),
+                    saveData = gameState.picture.fold(CanvasDraw.emptyValue)(identity),
                   ))()
                 )
               ),
@@ -165,9 +214,12 @@ object Game {
       )
   }
 
-  val component = ScalaComponent.builder[Props]("Home")
+  val component = ScalaComponent.builder[Props]("Game")
     .initialState(State())
     .renderBackend[Backend]
+    .componentDidMount(_.backend.startOrStopInterval())
+    .componentDidUpdate(_.backend.startOrStopInterval())
+    .componentWillUnmount(_.backend.willUnmount)
     .build
 
   def apply(router: RouterCtl[Loc], proxy: ModelProxy[Option[GameData]]) = component(Props(router, proxy))

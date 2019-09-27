@@ -11,6 +11,7 @@ object GameActor {
   sealed trait GameActorMsg
   case class UserQuitted(userId: Int) extends GameActorMsg
   case class SendChatMsg(nickname: String, userId: Int, msg: String) extends GameActorMsg
+  case class ChangePicture(value: String) extends GameActorMsg
 
   case class GameUser(ref: Option[ActorRef[UserActor.UserActorMsg]], dtoData: Dto.GameUser)
   case class GameState(id: Int, users: Vector[GameUser], draftsman: GameUser, queue: Vector[GameUser], secret: String)
@@ -38,6 +39,10 @@ object GameActor {
           case _ =>
             Behaviors.same
         }
+
+      case ChangePicture(value) =>
+        broadcastMessage(state.queue, Dto.PictureChanged(value))
+        Behaviors.same
 
       case UserQuitted(userId) =>
         val userByIdPredicate: GameUser => Boolean = _.dtoData.u.id == userId
