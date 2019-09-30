@@ -70,7 +70,7 @@ object Game {
       state <- $.state
       props <- $.props
       newPicture = getCanvasOps.getSaveData()
-      _ <- if (state.picture != newPicture)
+      _ <- if (state.picture != newPicture || 1 == 1)
               props.proxy.dispatchCB(ChangePictureA(newPicture)) >>
               $.modState(_.copy(picture = newPicture))
             else Callback.empty
@@ -120,92 +120,90 @@ object Game {
     }
 
     def fullRender(gameState: GameState, me: User, state: State) =
-      React.Fragment(
-        <.div(^.cls := "row",
-          <.div(^.cls := "col col-md-2",
-            <.div(^.cls := "row",
-              <.div(^.cls := "col d-flex justify-content-center",
-                BlockPicker(
-                  triangle = "hide",
-                  color = state.color,
-                  onChangeComplete = changeColor _,
-                  colors = js.Array("#f44336", "#e91e63", "#9c27b0", "#673ab7", "#3f51b5",
-                    "#2196f3", "#03a9f4", "#00bcd4", "#009688", "#4caf50",
-                    "#8bc34a", "#cddc39", "#ffeb3b", "#ffc107", "#ff9800",
-                    "#ff5722", "#795548", "#607d8b", "#D9E3F0", "#FDA1FF")
-                )
+      <.div(^.cls := "row",
+        <.div(^.cls := "col col-md-2",
+          <.div(^.cls := "row",
+            <.div(^.cls := "col d-flex justify-content-center",
+              BlockPicker(
+                triangle = "hide",
+                color = state.color,
+                onChangeComplete = changeColor _,
+                colors = js.Array("#f44336", "#e91e63", "#9c27b0", "#673ab7", "#3f51b5",
+                  "#2196f3", "#03a9f4", "#00bcd4", "#009688", "#4caf50",
+                  "#8bc34a", "#cddc39", "#ffeb3b", "#ffc107", "#ff9800",
+                  "#ff5722", "#795548", "#607d8b", "#D9E3F0", "#FDA1FF")
               )
-            ),
-            <.div(^.cls := "row pt-2",
-              <.div(^.cls := "col text-center",
-                CustomColorButton(state.color, changeColor)
-              )
-            ),
-            <.div(^.cls := "row mt-2",
-              <.div(^.cls := "col text-center", <.div(^.cls := "btn btn-secondary w-100", "undo", ^.onClick --> undo())),
-            ),
-            <.div(^.cls := "row mt-2",
-              <.div(^.cls := "col text-center", <.div(^.cls := "btn btn-danger w-100", "clear", ^.onClick --> clear()))
-            ),
-            <.div(^.cls := "row mt-2",
-              <.div(^.cls := "col text-center mt-2", "size:"),
-              <.div(^.cls := "col text-center",
-                <.input(^.tpe := "range", ^.cls := "form-control",
-                  ^.min := 1,
-                  ^.max := 50,
-                  ^.step := 1,
-                  ^.onChange ==> updateSize,
-                  ^.value := state.brushRadius
-                )
-              )
-            ),
-            <.div(^.cls := "row mt-2",
-              <.div(^.cls := "col text-center mt-2", "lazy radius:"),
-              <.div(^.cls := "col text-center",
-                <.input(^.tpe := "range", ^.cls := "form-control",
-                  ^.min := 0,
-                  ^.max := 50,
-                  ^.step := 1,
-                  ^.onChange ==> updateLazy,
-                  ^.value := state.lazyRadius
-                )
-              )
-            ),
-          ),
-          <.div(^.cls := "col col-md-8",
-            <.div(^.cls := "row p-2",
-              gameState.secret.fold(<.div(^.cls := "alert alert-info w-100 text-center", "Guess what's that!")) { secret =>
-                <.div(^.cls := "alert alert-warning w-100 text-center", "YOUR TURN! Try to draw: ", <.b(secret)),
-              }
-            ),
-            <.div(^.cls := "row p-2",
-              <.div(^.cls := "col overflow-auto",
-                <.div(^.cls := "game-size p-4 mx-auto",
-                  CanvasDraw.component.withRef(ref)(CanvasDraw.props(
-                    canvasWidth = 800,
-                    brushColor = state.color,
-                    canvasHeight = 600,
-                    brushRadius = state.brushRadius,
-                    lazyRadius = state.lazyRadius,
-                    disabled = gameState.secret.fold(true)(_ => false),
-                    saveData = gameState.picture.fold(CanvasDraw.emptyValue)(identity),
-                  ))()
-                )
-              ),
             )
           ),
-          <.div(^.cls := "col col-md-2",
-            <.div(^.cls := "row",
-              <.div(^.cls := "col",
-                ScoreList(gameState.users),
-                Chat(me, gameState.msgs),
-                <.form(
-                  <.div(^.cls := "row pt-2",
-                    <.input(^.cls := "form-control w-100", ^.tpe := "text", ^.value := state.chatMsg, ^.onChange ==> updateChatMsg)
-                  ),
-                  <.div(^.cls := "row pt-2",
-                    <.button(^.cls := "btn btn-primary w-100", "guess", ^.onClick ==> acceptChatMsg)
-                  )
+          <.div(^.cls := "row pt-2",
+            <.div(^.cls := "col text-center",
+              CustomColorButton(state.color, changeColor)
+            )
+          ),
+          <.div(^.cls := "row mt-2",
+            <.div(^.cls := "col text-center", <.div(^.cls := "btn btn-secondary w-100", "undo", ^.onClick --> undo())),
+          ),
+          <.div(^.cls := "row mt-2",
+            <.div(^.cls := "col text-center", <.div(^.cls := "btn btn-danger w-100", "clear", ^.onClick --> clear()))
+          ),
+          <.div(^.cls := "row mt-2",
+            <.div(^.cls := "col text-center mt-2", "size:"),
+            <.div(^.cls := "col text-center",
+              <.input(^.tpe := "range", ^.cls := "form-control",
+                ^.min := 1,
+                ^.max := 50,
+                ^.step := 1,
+                ^.onChange ==> updateSize,
+                ^.value := state.brushRadius
+              )
+            )
+          ),
+          <.div(^.cls := "row mt-2",
+            <.div(^.cls := "col text-center mt-2", "lazy radius:"),
+            <.div(^.cls := "col text-center",
+              <.input(^.tpe := "range", ^.cls := "form-control",
+                ^.min := 0,
+                ^.max := 50,
+                ^.step := 1,
+                ^.onChange ==> updateLazy,
+                ^.value := state.lazyRadius
+              )
+            )
+          ),
+        ),
+        <.div(^.cls := "col col-md-8",
+          <.div(^.cls := "row p-2",
+            gameState.secret.fold(<.div(^.cls := "alert alert-info w-100 text-center", "Guess what's that!")) { secret =>
+              <.div(^.cls := "alert alert-warning w-100 text-center", "YOUR TURN! Try to draw: ", <.b(secret)),
+            }
+          ),
+          <.div(^.cls := "row p-2",
+            <.div(^.cls := "col overflow-auto",
+              <.div(^.cls := "game-size p-4 mx-auto",
+                CanvasDraw.component.withRef(ref)(CanvasDraw.props(
+                  canvasWidth = 800,
+                  brushColor = state.color,
+                  canvasHeight = 600,
+                  brushRadius = state.brushRadius,
+                  lazyRadius = state.lazyRadius,
+                  disabled = gameState.secret.fold(true)(_ => false),
+                  saveData = gameState.picture.fold(CanvasDraw.emptyValue)(identity),
+                ))()
+              )
+            ),
+          )
+        ),
+        <.div(^.cls := "col col-md-2",
+          <.div(^.cls := "row",
+            <.div(^.cls := "col",
+              <.div(ScoreList(gameState.users)),
+              <.div(Chat(me, gameState.msgs)),
+              <.form(
+                <.div(^.cls := "row pt-2",
+                  <.input(^.cls := "form-control w-100", ^.tpe := "text", ^.value := state.chatMsg, ^.onChange ==> updateChatMsg)
+                ),
+                <.div(^.cls := "row pt-2",
+                  <.button(^.cls := "btn btn-primary w-100", "guess", ^.onClick ==> acceptChatMsg)
                 )
               )
             )
